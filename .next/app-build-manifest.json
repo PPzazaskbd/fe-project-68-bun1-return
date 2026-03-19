@@ -1,0 +1,77 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/app/_not-found/page-dcff191f5380c762.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/css/807046f19e4f5555.css",
+      "static/chunks/722-6eb349d45946f328.js",
+      "static/chunks/874-437a265a67d6cfee.js",
+      "static/chunks/app/layout-62e6f71bb5eb1816.js"
+    ],
+    "/api/auth/[...nextauth]/route": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/app/api/auth/[...nextauth]/route-dca95514a0c1d25d.js"
+    ],
+    "/(venueinfo)/venue/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/108-3af23e4925e4ed56.js",
+      "static/chunks/874-437a265a67d6cfee.js",
+      "static/chunks/app/(venueinfo)/venue/page-3a659896d6c3407c.js"
+    ],
+    "/booking/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/722-6eb349d45946f328.js",
+      "static/chunks/app/booking/page-bcf01ebbddad288a.js"
+    ],
+    "/mybooking/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/722-6eb349d45946f328.js",
+      "static/chunks/app/mybooking/page-6916f3f7c36588b8.js"
+    ],
+    "/(venueinfo)/venue/[vid]/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/63-e830d34011207317.js",
+      "static/chunks/app/(venueinfo)/venue/[vid]/page-d4bcb7d69d068e20.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/108-3af23e4925e4ed56.js",
+      "static/chunks/app/login/page-15dcedeaf0a72e9b.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-6b3c4bafba00fe32.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-13036fef2dc48ea1.js",
+      "static/chunks/main-app-e7e83db15e2e69fc.js",
+      "static/chunks/108-3af23e4925e4ed56.js",
+      "static/chunks/app/page-a5c7dafe348836f4.js"
+    ]
+  }
+}

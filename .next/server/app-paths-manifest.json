@@ -1,0 +1,11 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/(venueinfo)/venue/page": "app/(venueinfo)/venue/page.js",
+  "/booking/page": "app/booking/page.js",
+  "/mybooking/page": "app/mybooking/page.js",
+  "/(venueinfo)/venue/[vid]/page": "app/(venueinfo)/venue/[vid]/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
+}
