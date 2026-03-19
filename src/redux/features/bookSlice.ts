@@ -17,8 +17,8 @@ export const bookSlice = createSlice({
       const newBooking = action.payload;
       const index = state.bookItems.findIndex(
         (item) =>
-          item.venue === newBooking.venue &&
-          item.bookDate === newBooking.bookDate
+          item.hotel === newBooking.hotel &&
+          item.checkIn === newBooking.checkIn
       );
       if (index !== -1) {
         state.bookItems[index] = newBooking;
@@ -33,8 +33,8 @@ export const bookSlice = createSlice({
           !(
             item.nameLastname === target.nameLastname &&
             item.tel === target.tel &&
-            item.venue === target.venue &&
-            item.bookDate === target.bookDate
+            item.hotel === target.hotel &&
+            item.checkIn === target.checkIn
           )
       );
     },

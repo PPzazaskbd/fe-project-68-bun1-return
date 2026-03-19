@@ -6,16 +6,16 @@ import { useSession } from "next-auth/react";
 
 const slides = [
   {
-    label: "The Grand Pavilion",
-    sublabel: "Ballroom · 800 Guests",
+    label: "Grand Deluxe Suite",
+    sublabel: "Suite · King Bed · City View",
   },
   {
-    label: "Garden Terrace",
-    sublabel: "Outdoor · 300 Guests",
+    label: "Superior Ocean Room",
+    sublabel: "Deluxe · Ocean View · Balcony",
   },
   {
-    label: "Skyline Suite",
-    sublabel: "Rooftop · 150 Guests",
+    label: "Presidential Villa",
+    sublabel: "Villa · Private Pool · Butler Service",
   },
 ];
 
@@ -29,14 +29,14 @@ export default function Banner() {
   return (
     <section
       className="relative w-full min-h-screen flex flex-col"
-      style={{ background: "#1A1208" }}
+      style={{ background: "#0D1B2A" }}
     >
       {/* Main hero image placeholder */}
       <div
         className="relative flex-1 min-h-[85vh] flex items-center justify-center cursor-pointer select-none overflow-hidden"
         onClick={handleNext}
         style={{
-          background: `linear-gradient(135deg, #1A1208 0%, #2D1B0E ${30 + index * 10}%, #4A3420 70%, #8B6E52 100%)`,
+          background: `linear-gradient(135deg, #0D1B2A 0%, #1B2E42 ${30 + index * 10}%, #2C4A6E 70%, #4A7098 100%)`,
           transition: "background 0.8s ease",
         }}
       >
@@ -58,14 +58,14 @@ export default function Banner() {
             className="absolute top-8 left-1/2 -translate-x-1/2 px-6 py-2"
             style={{
               border: "1px solid rgba(196,151,58,0.4)",
-              background: "rgba(26,18,8,0.7)",
+              background: "rgba(13,27,42,0.7)",
             }}
           >
             <span
               className="text-xs tracking-[0.3em] uppercase"
               style={{ color: "#C4973A", fontFamily: "'Cormorant SC', serif" }}
             >
-              Welcome, {session.user.name}
+              Welcome back, {session.user.name}
             </span>
           </div>
         )}
@@ -105,7 +105,7 @@ export default function Banner() {
 
           <p
             className="text-lg md:text-xl mb-10 tracking-widest"
-            style={{ color: "rgba(184,150,60,0.8)", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "rgba(196,151,58,0.7)", fontFamily: "'Cormorant SC', serif" }}
           >
             click to explore
           </p>
@@ -119,7 +119,7 @@ export default function Banner() {
                 fontFamily: "'Cormorant SC', serif",
               }}
             >
-              Explore Venues
+              Discover Hotels
             </button>
           </Link>
         </div>
@@ -166,16 +166,16 @@ export default function Banner() {
       >
         <p
           className="text-xs tracking-[0.3em] uppercase"
-          style={{ color: "rgba(184,150,60,0.6)", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "rgba(196,151,58,0.5)", fontFamily: "'Cormorant SC', serif" }}
         >
-          Premium Venue Collection
+          Luxury Hotel Collection
         </p>
         <Link href="/booking">
           <span
             className="text-xs tracking-[0.3em] uppercase hover:text-[#C4973A] transition-colors"
-            style={{ color: "rgba(184,150,60,0.6)", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "rgba(196,151,58,0.5)", fontFamily: "'Cormorant SC', serif" }}
           >
-            Make a Reservation →
+            Book Your Stay →
           </span>
         </Link>
       </div>

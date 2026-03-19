@@ -9,7 +9,7 @@ export default async function TopMenu() {
     <nav
       className="w-full flex items-center justify-between px-8 py-4"
       style={{
-        background: "#1A1208",
+        background: "#0D1B2A",
         borderBottom: "1px solid rgba(196,151,58,0.2)",
       }}
     >
@@ -19,7 +19,7 @@ export default async function TopMenu() {
           <Link
             href="/api/auth/signout"
             className="text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#C4973A]"
-            style={{ color: "#B8A898", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "#9BAFC4", fontFamily: "'Cormorant SC', serif" }}
           >
             Sign Out
           </Link>
@@ -27,7 +27,7 @@ export default async function TopMenu() {
           <Link
             href="/login"
             className="text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#C4973A]"
-            style={{ color: "#B8A898", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "#9BAFC4", fontFamily: "'Cormorant SC', serif" }}
           >
             Sign In
           </Link>
@@ -54,23 +54,23 @@ export default async function TopMenu() {
         <Link
           href="/venue"
           className="text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#C4973A]"
-          style={{ color: "#B8A898", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "#9BAFC4", fontFamily: "'Cormorant SC', serif" }}
         >
-          Venues
+          Hotels
         </Link>
         <Link
           href="/booking"
           className="text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#C4973A]"
-          style={{ color: "#B8A898", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "#9BAFC4", fontFamily: "'Cormorant SC', serif" }}
         >
-          Reserve
+          Book Stay
         </Link>
         <Link
           href="/mybooking"
           className="text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#C4973A]"
-          style={{ color: "#B8A898", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "#9BAFC4", fontFamily: "'Cormorant SC', serif" }}
         >
-          My Bookings
+          My Stays
         </Link>
         {session && (
           <span

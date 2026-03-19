@@ -1,8 +1,10 @@
 export interface BookingItem {
   nameLastname: string;
   tel: string;
-  venue: string;
-  bookDate: string;
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
 }
 
 export interface VenueItem {

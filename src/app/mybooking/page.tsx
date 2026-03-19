@@ -1,13 +1,13 @@
 import BookingList from "@/components/BookingList";
 
-export default function MyBookingPage() {
+export default function MyStaysPage() {
   return (
     <main className="min-h-screen" style={{ background: "#FAF7F2" }}>
       {/* Header */}
       <div
         className="py-20 text-center px-6"
         style={{
-          background: "linear-gradient(180deg, #1A1208 0%, #2D1B0E 100%)",
+          background: "linear-gradient(180deg, #0D1B2A 0%, #1B2E42 100%)",
         }}
       >
         <div className="flex items-center gap-4 justify-center mb-4">
@@ -24,13 +24,13 @@ export default function MyBookingPage() {
           className="text-5xl md:text-6xl tracking-wide text-white"
           style={{ fontFamily: "'Cormorant SC', serif", fontWeight: 400 }}
         >
-          My Bookings
+          My Stays
         </h1>
         <p
           className="mt-4 text-lg tracking-wider"
           style={{ color: "#B8963C", fontFamily: "'Cormorant SC', serif" }}
         >
-          Your upcoming reservations
+          Your upcoming hotel reservations
         </p>
       </div>
 

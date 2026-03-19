@@ -1,13 +1,15 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+SC:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import "tailwindcss";
 
 :root {
+  --navy: #0D1B2A;
+  --navy-mid: #1B2E42;
+  --navy-light: #2C4A6E;
+  --blue-mid: #4A7098;
+  --blue-light: #9BAFC4;
   --cream: #FAF7F2;
-  --cream-dark: #F0E8DC;
-  --beige: #E8D5B7;
-  --brown-dark: #1A1208;
-  --brown-mid: #4A3420;
-  --brown-light: #8B6E52;
+  --cream-dark: #EAF0F6;
+  --border: #C8D8E8;
   --gold: #C4973A;
   --gold-light: #D4A84B;
   --white: #FFFFFF;
@@ -22,7 +24,7 @@ body {
 body {
   background: var(--cream);
   font-family: 'Cormorant SC', Georgia, serif;
-  color: var(--brown-dark);
+  color: var(--navy);
 }
 
 * {

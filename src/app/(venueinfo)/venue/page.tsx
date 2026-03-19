@@ -1,7 +1,7 @@
 import CardPanel from "@/components/CardPanel";
 import getVenues from "@/libs/getVenues";
 
-export default async function VenuePage() {
+export default async function HotelsPage() {
   const venuesJson = await getVenues();
 
   return (
@@ -10,7 +10,7 @@ export default async function VenuePage() {
       <div
         className="py-20 text-center px-6"
         style={{
-          background: "linear-gradient(180deg, #1A1208 0%, #2D1B0E 100%)",
+          background: "linear-gradient(180deg, #0D1B2A 0%, #1B2E42 100%)",
         }}
       >
         <div className="flex items-center gap-4 justify-center mb-4">
@@ -27,17 +27,17 @@ export default async function VenuePage() {
           className="text-5xl md:text-6xl tracking-wide text-white"
           style={{ fontFamily: "'Cormorant SC', serif", fontWeight: 400 }}
         >
-          Our Venues
+          Our Hotels
         </h1>
         <p
           className="mt-4 text-lg tracking-wider"
           style={{ color: "#B8963C", fontFamily: "'Cormorant SC', serif" }}
         >
-          Curated spaces for extraordinary occasions
+          Discover your perfect stay
         </p>
       </div>
 
-      {/* Venue Cards */}
+      {/* Hotel Cards */}
       <div className="px-8 md:px-16 py-16">
         <CardPanel venuesJson={venuesJson} />
       </div>
