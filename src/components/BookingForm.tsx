@@ -65,17 +65,17 @@ export default function BookingForm() {
       {success && (
         <div
           className="mb-8 py-4 px-6 text-center"
-          style={{ background: "#EAF0F6", border: "1px solid #C4973A" }}
+          style={{ background: "#F2E4C8", border: "1px solid #C8881E" }}
         >
           <p
             className="text-sm tracking-[0.2em] uppercase"
-            style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
           >
             Booking Confirmed
           </p>
           <p
             className="text-xs mt-1"
-            style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
           >
             We look forward to welcoming you.
           </p>
@@ -84,17 +84,17 @@ export default function BookingForm() {
 
       <div
         className="bg-white p-10 shadow-lg"
-        style={{ border: "1px solid #C8D8E8" }}
+        style={{ border: "1px solid #D4AD7A" }}
       >
         <div className="flex items-center gap-3 mb-8">
-          <div className="h-px flex-1 bg-[#C4973A] opacity-30" />
+          <div className="h-px flex-1 bg-[#C8881E] opacity-30" />
           <span
             className="text-xs tracking-[0.3em] uppercase"
-            style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+            style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
           >
             Hotel Reservation
           </span>
-          <div className="h-px flex-1 bg-[#C4973A] opacity-30" />
+          <div className="h-px flex-1 bg-[#C8881E] opacity-30" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-7">
@@ -102,7 +102,7 @@ export default function BookingForm() {
           <div className="flex flex-col gap-1">
             <label
               className="text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Guest Name
             </label>
@@ -110,7 +110,7 @@ export default function BookingForm() {
               type="text"
               value={nameLastname}
               onChange={(e) => setNameLastname(e.target.value)}
-              className="border-b border-[#C4973A] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
+              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
               style={{ fontFamily: "'Cormorant SC', serif" }}
               placeholder="Full name"
             />
@@ -120,7 +120,7 @@ export default function BookingForm() {
           <div className="flex flex-col gap-1">
             <label
               className="text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Contact Number
             </label>
@@ -128,7 +128,7 @@ export default function BookingForm() {
               type="tel"
               value={tel}
               onChange={(e) => setTel(e.target.value)}
-              className="border-b border-[#C4973A] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
+              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
               style={{ fontFamily: "'Cormorant SC', serif" }}
               placeholder="Phone number"
             />
@@ -138,7 +138,7 @@ export default function BookingForm() {
           <div className="flex flex-col gap-1">
             <label
               className="text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Hotel
             </label>
@@ -146,7 +146,7 @@ export default function BookingForm() {
               type="text"
               value={hotel}
               onChange={(e) => setHotel(e.target.value)}
-              className="border-b border-[#C4973A] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
+              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
               style={{ fontFamily: "'Cormorant SC', serif" }}
               placeholder="Hotel name"
             />
@@ -157,7 +157,7 @@ export default function BookingForm() {
             <div className="flex flex-col gap-1">
               <label
                 className="text-xs tracking-[0.2em] uppercase"
-                style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
               >
                 Check-In
               </label>
@@ -169,14 +169,14 @@ export default function BookingForm() {
                   setCheckIn(e.target.value);
                   if (checkOut && checkOut <= e.target.value) setCheckOut("");
                 }}
-                className="border-b border-[#C4973A] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
+                className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
             </div>
             <div className="flex flex-col gap-1">
               <label
                 className="text-xs tracking-[0.2em] uppercase"
-                style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
               >
                 Check-Out
               </label>
@@ -185,7 +185,7 @@ export default function BookingForm() {
                 value={checkOut}
                 min={checkIn || today}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="border-b border-[#C4973A] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
+                className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
             </div>
@@ -195,17 +195,17 @@ export default function BookingForm() {
           {nights > 0 && (
             <div
               className="py-3 px-4 flex items-center justify-between"
-              style={{ background: "#EAF0F6" }}
+              style={{ background: "#F2E4C8" }}
             >
               <span
                 className="text-xs tracking-[0.2em] uppercase"
-                style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
               >
                 Duration
               </span>
               <span
                 className="text-sm"
-                style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
+                style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
               >
                 {nights} {nights === 1 ? "Night" : "Nights"}
               </span>
@@ -216,30 +216,30 @@ export default function BookingForm() {
           <div className="flex flex-col gap-1">
             <label
               className="text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Guests
             </label>
-            <div className="flex items-center gap-4 border-b border-[#C4973A] py-2">
+            <div className="flex items-center gap-4 border-b border-[#C8881E] py-2">
               <button
                 type="button"
                 onClick={() => setGuests((g) => Math.max(1, g - 1))}
-                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#C4973A]"
-                style={{ color: "#4A7098", border: "1px solid #C8D8E8", fontFamily: "'Cormorant SC', serif" }}
+                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
+                style={{ color: "#4A7098", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
               >
                 −
               </button>
               <span
                 className="flex-1 text-center text-base"
-                style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
               >
                 {guests} {guests === 1 ? "Guest" : "Guests"}
               </span>
               <button
                 type="button"
                 onClick={() => setGuests((g) => Math.min(10, g + 1))}
-                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#C4973A]"
-                style={{ color: "#4A7098", border: "1px solid #C8D8E8", fontFamily: "'Cormorant SC', serif" }}
+                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
+                style={{ color: "#4A7098", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
               >
                 +
               </button>
@@ -259,7 +259,7 @@ export default function BookingForm() {
             type="submit"
             className="mt-2 py-4 text-white tracking-[0.4em] uppercase text-sm transition-opacity hover:opacity-80"
             style={{
-              background: "#0D1B2A",
+              background: "#130900",
               fontFamily: "'Cormorant SC', serif",
             }}
           >

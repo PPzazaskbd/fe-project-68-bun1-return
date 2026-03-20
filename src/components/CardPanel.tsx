@@ -19,9 +19,9 @@ export default function CardPanel({ venuesJson }: CardPanelProps) {
       <div className="text-center py-20">
         <p
           className="text-xl tracking-widest"
-          style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
         >
-          No venues available at the moment.
+          No hotels available at the moment.
         </p>
       </div>
     );
@@ -37,6 +37,7 @@ export default function CardPanel({ venuesJson }: CardPanelProps) {
           address={venue.address}
           province={venue.province}
           dailyrate={venue.dailyrate}
+          picture={venue.picture}
         />
       ))}
     </div>

@@ -19,21 +19,21 @@ export default function BookingList() {
     return (
       <div className="text-center py-20">
         <div className="flex items-center gap-4 justify-center mb-6">
-          <div className="h-px w-16 bg-[#C4973A] opacity-30" />
-          <div className="w-10 h-10 border border-[#C4973A] opacity-30 flex items-center justify-center">
-            <span style={{ color: "#C4973A", fontSize: "1.2rem" }}>◇</span>
+          <div className="h-px w-16 bg-[#C8881E] opacity-30" />
+          <div className="w-10 h-10 border border-[#C8881E] opacity-30 flex items-center justify-center">
+            <span style={{ color: "#C8881E", fontSize: "1.2rem" }}>◇</span>
           </div>
-          <div className="h-px w-16 bg-[#C4973A] opacity-30" />
+          <div className="h-px w-16 bg-[#C8881E] opacity-30" />
         </div>
         <p
           className="text-2xl tracking-wide mb-2"
-          style={{ color: "#1B2E42", fontFamily: "'Cormorant SC', serif", fontWeight: 400 }}
+          style={{ color: "#2A1005", fontFamily: "'Cormorant SC', serif", fontWeight: 400 }}
         >
           No Stays Booked Yet
         </p>
         <p
           className="text-sm tracking-widest uppercase"
-          style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+          style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
         >
           Your upcoming hotel stays will appear here
         </p>
@@ -49,7 +49,7 @@ export default function BookingList() {
           <div
             key={index}
             className="bg-white p-8 flex items-start justify-between gap-6"
-            style={{ border: "1px solid #C8D8E8" }}
+            style={{ border: "1px solid #D4AD7A" }}
           >
             {/* Booking number */}
             <div
@@ -64,13 +64,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Guest
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
                 >
                   {item.nameLastname}
                 </p>
@@ -79,13 +79,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Contact
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.tel}
                 </p>
@@ -94,13 +94,13 @@ export default function BookingList() {
               <div className="sm:col-span-2">
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Hotel
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#C4973A", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
+                  style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
                 >
                   {item.hotel}
                 </p>
@@ -109,13 +109,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Check-In
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.checkIn}
                 </p>
@@ -124,13 +124,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Check-Out
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.checkOut}
                 </p>
@@ -139,13 +139,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Duration
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {nights} {nights === 1 ? "Night" : "Nights"}
                 </p>
@@ -154,13 +154,13 @@ export default function BookingList() {
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#4A7098", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
                 >
                   Guests
                 </p>
                 <p
                   className="text-lg"
-                  style={{ color: "#0D1B2A", fontFamily: "'Cormorant SC', serif" }}
+                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.guests} {item.guests === 1 ? "Guest" : "Guests"}
                 </p>
@@ -173,7 +173,7 @@ export default function BookingList() {
               className="shrink-0 px-5 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
               style={{
                 border: "1px solid #C4973A",
-                color: "#C4973A",
+                color: "#C8881E",
                 background: "transparent",
                 fontFamily: "'Cormorant SC', serif",
               }}
