@@ -5,6 +5,9 @@ import { useDispatch } from "react-redux";
 import { addBooking } from "@/redux/features/bookSlice";
 import { BookingItem } from "@/interface";
 import { useSearchParams } from "next/navigation";
+import hotels from "@/data/hotels";
+
+const hotelNames = hotels.data.map((h) => h.name);
 
 export default function BookingForm() {
   const dispatch = useDispatch();
@@ -13,7 +16,7 @@ export default function BookingForm() {
 
   const [nameLastname, setNameLastname] = useState("");
   const [tel, setTel] = useState("");
-  const [hotel, setHotel] = useState(preselectedHotel);
+  const [hotel, setHotel] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -21,7 +24,14 @@ export default function BookingForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (preselectedHotel) setHotel(preselectedHotel);
+    if (preselectedHotel) {
+      const decoded = decodeURIComponent(preselectedHotel);
+      // Match by exact name or closest match (case-insensitive)
+      const matched = hotelNames.find(
+        (n) => n.toLowerCase() === decoded.toLowerCase()
+      );
+      setHotel(matched || decoded);
+    }
   }, [preselectedHotel]);
 
   const today = new Date().toISOString().split("T")[0];
@@ -36,8 +46,12 @@ export default function BookingForm() {
     e.preventDefault();
     setError("");
 
-    if (!nameLastname || !tel || !hotel || !checkIn || !checkOut) {
+    if (!nameLastname.trim() || !tel.trim() || !hotel || !checkIn || !checkOut) {
       setError("Please fill in all fields to complete your reservation.");
+      return;
+    }
+    if (!hotelNames.includes(hotel)) {
+      setError("Please select a valid hotel from the list.");
       return;
     }
     if (checkOut <= checkIn) {
@@ -59,6 +73,11 @@ export default function BookingForm() {
   };
 
   const nights = calcNights();
+
+  const inputClass =
+    "border-b border-[#C8881E] bg-transparent py-2 text-[#130900] focus:outline-none focus:border-[#130900] transition-colors text-base w-full";
+  const labelClass =
+    "text-xs tracking-[0.2em] uppercase";
 
   return (
     <div className="w-full max-w-lg">
@@ -101,7 +120,7 @@ export default function BookingForm() {
           {/* Name */}
           <div className="flex flex-col gap-1">
             <label
-              className="text-xs tracking-[0.2em] uppercase"
+              className={labelClass}
               style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Guest Name
@@ -110,7 +129,7 @@ export default function BookingForm() {
               type="text"
               value={nameLastname}
               onChange={(e) => setNameLastname(e.target.value)}
-              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
+              className={inputClass}
               style={{ fontFamily: "'Cormorant SC', serif" }}
               placeholder="Full name"
             />
@@ -119,7 +138,7 @@ export default function BookingForm() {
           {/* Tel */}
           <div className="flex flex-col gap-1">
             <label
-              className="text-xs tracking-[0.2em] uppercase"
+              className={labelClass}
               style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Contact Number
@@ -128,35 +147,42 @@ export default function BookingForm() {
               type="tel"
               value={tel}
               onChange={(e) => setTel(e.target.value)}
-              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
+              className={inputClass}
               style={{ fontFamily: "'Cormorant SC', serif" }}
               placeholder="Phone number"
             />
           </div>
 
-          {/* Hotel */}
+          {/* Hotel — dropdown from list */}
           <div className="flex flex-col gap-1">
             <label
-              className="text-xs tracking-[0.2em] uppercase"
+              className={labelClass}
               style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Hotel
             </label>
-            <input
-              type="text"
+            <select
               value={hotel}
               onChange={(e) => setHotel(e.target.value)}
-              className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-base"
-              style={{ fontFamily: "'Cormorant SC', serif" }}
-              placeholder="Hotel name"
-            />
+              className={inputClass}
+              style={{ fontFamily: "'Cormorant SC', serif", cursor: "pointer" }}
+            >
+              <option value="" disabled>
+                Select a hotel
+              </option>
+              {hotelNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Check-in / Check-out row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label
-                className="text-xs tracking-[0.2em] uppercase"
+                className={labelClass}
                 style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
               >
                 Check-In
@@ -169,13 +195,13 @@ export default function BookingForm() {
                   setCheckIn(e.target.value);
                   if (checkOut && checkOut <= e.target.value) setCheckOut("");
                 }}
-                className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
+                className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
             </div>
             <div className="flex flex-col gap-1">
               <label
-                className="text-xs tracking-[0.2em] uppercase"
+                className={labelClass}
                 style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
               >
                 Check-Out
@@ -185,7 +211,7 @@ export default function BookingForm() {
                 value={checkOut}
                 min={checkIn || today}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="border-b border-[#C8881E] bg-transparent py-2 text-[#0D1B2A] focus:outline-none focus:border-[#0D1B2A] transition-colors text-sm"
+                className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
             </div>
@@ -215,7 +241,7 @@ export default function BookingForm() {
           {/* Guests */}
           <div className="flex flex-col gap-1">
             <label
-              className="text-xs tracking-[0.2em] uppercase"
+              className={labelClass}
               style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               Guests
@@ -225,7 +251,7 @@ export default function BookingForm() {
                 type="button"
                 onClick={() => setGuests((g) => Math.max(1, g - 1))}
                 className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#4A7098", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
               >
                 −
               </button>
@@ -239,7 +265,7 @@ export default function BookingForm() {
                 type="button"
                 onClick={() => setGuests((g) => Math.min(10, g + 1))}
                 className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#4A7098", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
+                style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
               >
                 +
               </button>
