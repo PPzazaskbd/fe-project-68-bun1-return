@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import TopMenu from "@/components/TopMenu";
+import PageTransition from "@/components/PageTransition";
 import NextAuthProvider from "@/providers/NextAuthProvider";
 import ReduxProvider from "@/redux/ReduxProvider";
 import { getServerSession } from "next-auth";
@@ -24,7 +25,7 @@ export default async function RootLayout({
         <ReduxProvider>
           <NextAuthProvider session={session}>
             <TopMenu />
-            {children}
+            <PageTransition>{children}</PageTransition>
           </NextAuthProvider>
         </ReduxProvider>
       </body>

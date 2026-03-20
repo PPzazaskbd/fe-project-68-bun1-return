@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
@@ -33,7 +34,8 @@ export default async function TopMenu() {
         )}
       </div>
 
-      <Link href="/">
+      <Link href="/" className="flex items-center gap-2">
+        <Image src="/img/Bun_JS_logo.png" alt="Bun" width={28} height={28} />
         <span
           className="text-2xl tracking-[0.4em] uppercase"
           style={{
