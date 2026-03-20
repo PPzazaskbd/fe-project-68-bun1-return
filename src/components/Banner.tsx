@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -8,17 +9,20 @@ const slides = [
   {
     label: "Grand Deluxe Suite",
     sublabel: "Suite · King Bed · City View",
-    bg: "linear-gradient(135deg, #130900 0%, #2A1005 40%, #5C2E0E 100%)",
+    image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1600&q=80",
+    overlay: "linear-gradient(135deg, rgba(19,9,0,0.72) 0%, rgba(42,16,5,0.55) 60%, rgba(92,46,14,0.45) 100%)",
   },
   {
     label: "Superior Ocean Room",
     sublabel: "Deluxe · Ocean View · Balcony",
-    bg: "linear-gradient(135deg, #2A1005 0%, #5C2E0E 40%, #9C6240 100%)",
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1600&q=80",
+    overlay: "linear-gradient(135deg, rgba(19,9,0,0.65) 0%, rgba(42,16,5,0.5) 60%, rgba(156,98,64,0.4) 100%)",
   },
   {
     label: "Presidential Villa",
     sublabel: "Villa · Private Pool · Butler Service",
-    bg: "linear-gradient(135deg, #130900 0%, #3D1C0A 40%, #6B3A1F 100%)",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&q=80",
+    overlay: "linear-gradient(135deg, rgba(19,9,0,0.70) 0%, rgba(61,28,10,0.55) 60%, rgba(107,58,31,0.45) 100%)",
   },
 ];
 
@@ -37,35 +41,60 @@ export default function Banner() {
       <div
         className="relative flex-1 min-h-[85vh] flex items-center justify-center cursor-pointer select-none overflow-hidden"
         onClick={handleNext}
-        style={{
-          background: slides[index].bg,
-          transition: "background 0.8s ease",
-        }}
+        style={{ background: "#130900" }}
       >
+        {/* Background photo */}
+        {slides.map((slide, i) => (
+          <div
+            key={i}
+            className="absolute inset-0"
+            style={{
+              opacity: i === index ? 1 : 0,
+              transition: "opacity 1s ease",
+              zIndex: 0,
+            }}
+          >
+            <Image
+              src={slide.image}
+              alt={slide.label}
+              fill
+              priority={i === 0}
+              style={{ objectFit: "cover", objectPosition: "center" }}
+            />
+          </div>
+        ))}
+
+        {/* Dark gradient overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: slides[index].overlay, transition: "background 0.8s ease", zIndex: 1 }}
+        />
+
         {/* Shimmer overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: "radial-gradient(ellipse at 50% 30%, rgba(232,184,75,0.08) 0%, transparent 70%)",
+            zIndex: 2,
           }}
         />
 
         {/* Corner ornaments */}
-        <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#C8881E] opacity-70" />
-        <div className="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-[#C8881E] opacity-70" />
-        <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#C8881E] opacity-70" />
-        <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#C8881E] opacity-70" />
+        <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#C8881E] opacity-70 z-10" />
+        <div className="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-[#C8881E] opacity-70 z-10" />
+        <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#C8881E] opacity-70 z-10" />
+        <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#C8881E] opacity-70 z-10" />
 
         {/* Inner frame */}
         <div
-          className="absolute inset-8 pointer-events-none"
+          className="absolute inset-8 pointer-events-none z-10"
           style={{ border: "1px solid rgba(200,136,30,0.15)" }}
         />
 
         {/* Welcome badge */}
         {session?.user && (
           <div
-            className="absolute top-8 left-1/2 -translate-x-1/2 px-8 py-2"
+            className="absolute top-8 left-1/2 -translate-x-1/2 px-8 py-2 z-10"
             style={{
               border: "1px solid rgba(200,136,30,0.5)",
               background: "rgba(19,9,0,0.75)",
@@ -82,7 +111,7 @@ export default function Banner() {
 
         {/* Slide counter */}
         <div
-          className="absolute top-8 right-24 text-xs tracking-[0.3em]"
+          className="absolute top-8 right-24 text-xs tracking-[0.3em] z-10"
           style={{ color: "rgba(200,136,30,0.5)", fontFamily: "'Cormorant SC', serif" }}
         >
           {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
@@ -150,7 +179,7 @@ export default function Banner() {
         </div>
 
         {/* Slide dots */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-10">
           {slides.map((_, i) => (
             <button
               key={i}
@@ -168,14 +197,14 @@ export default function Banner() {
         </div>
 
         <button
-          className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
+          className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-colors hover:text-[#E8B84B] z-10"
           onClick={(e) => { e.stopPropagation(); handlePrev(); }}
           style={{ color: "rgba(200,136,30,0.5)", fontSize: "1.5rem" }}
         >
           ‹
         </button>
         <button
-          className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
+          className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-colors hover:text-[#E8B84B] z-10"
           onClick={(e) => { e.stopPropagation(); handleNext(); }}
           style={{ color: "rgba(200,136,30,0.5)", fontSize: "1.5rem" }}
         >
