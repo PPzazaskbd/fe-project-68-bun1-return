@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { addBooking } from "@/redux/features/bookSlice";
 import { BookingItem } from "@/interface";
@@ -17,16 +17,19 @@ export default function BookingForm() {
   const [nameLastname, setNameLastname] = useState("");
   const [tel, setTel] = useState("");
   const [hotel, setHotel] = useState(hotelNames[0] || "");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  // Use refs for dates — Safari sometimes skips React onChange for date inputs
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
+  const [checkInDisplay, setCheckInDisplay] = useState("");
+  const [checkOutDisplay, setCheckOutDisplay] = useState("");
+
   useEffect(() => {
     if (preselectedHotel) {
       const decoded = decodeURIComponent(preselectedHotel);
-      // Match by exact name or closest match (case-insensitive)
       const matched = hotelNames.find(
         (n) => n.toLowerCase() === decoded.toLowerCase()
       );
@@ -34,11 +37,20 @@ export default function BookingForm() {
     }
   }, [preselectedHotel]);
 
-  const today = new Date().toISOString().split("T")[0];
+  // Local today in YYYY-MM-DD (use locale date to avoid UTC-off-by-one in Safari/TH timezone)
+  const today = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  })();
 
   const calcNights = () => {
-    if (!checkIn || !checkOut) return 0;
-    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
+    const ci = checkInRef.current?.value || checkInDisplay;
+    const co = checkOutRef.current?.value || checkOutDisplay;
+    if (!ci || !co) return 0;
+    const diff = new Date(co).getTime() - new Date(ci).getTime();
     return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
   };
 
@@ -46,12 +58,28 @@ export default function BookingForm() {
     e.preventDefault();
     setError("");
 
-    if (!nameLastname.trim() || !tel.trim() || !hotel || !checkIn || !checkOut) {
-      setError("Please fill in all fields to complete your reservation.");
+    // Read dates from refs (bypasses Safari onChange issue) then fall back to state
+    const checkIn = checkInRef.current?.value || checkInDisplay;
+    const checkOut = checkOutRef.current?.value || checkOutDisplay;
+
+    if (!nameLastname.trim()) {
+      setError("Please enter your guest name.");
       return;
     }
-    if (!hotelNames.includes(hotel)) {
-      setError("Please select a valid hotel from the list.");
+    if (!tel.trim()) {
+      setError("Please enter your contact number.");
+      return;
+    }
+    if (!hotel) {
+      setError("Please select a hotel.");
+      return;
+    }
+    if (!checkIn) {
+      setError("Please select a check-in date.");
+      return;
+    }
+    if (!checkOut) {
+      setError("Please select a check-out date.");
       return;
     }
     if (checkOut <= checkIn) {
@@ -65,8 +93,10 @@ export default function BookingForm() {
     setNameLastname("");
     setTel("");
     setHotel(hotelNames[0] || "");
-    setCheckIn("");
-    setCheckOut("");
+    setCheckInDisplay("");
+    setCheckOutDisplay("");
+    if (checkInRef.current) checkInRef.current.value = "";
+    if (checkOutRef.current) checkOutRef.current.value = "";
     setGuests(1);
     setSuccess(true);
     setTimeout(() => setSuccess(false), 4000);
@@ -76,8 +106,7 @@ export default function BookingForm() {
 
   const inputClass =
     "border-b border-[#C8881E] bg-transparent py-2 text-[#130900] focus:outline-none focus:border-[#130900] transition-colors text-base w-full";
-  const labelClass =
-    "text-xs tracking-[0.2em] uppercase";
+  const labelClass = "text-xs tracking-[0.2em] uppercase";
 
   return (
     <div className="w-full max-w-lg">
@@ -153,7 +182,7 @@ export default function BookingForm() {
             />
           </div>
 
-          {/* Hotel — dropdown from list */}
+          {/* Hotel dropdown */}
           <div className="flex flex-col gap-1">
             <label
               className={labelClass}
@@ -175,7 +204,7 @@ export default function BookingForm() {
             </select>
           </div>
 
-          {/* Check-in / Check-out row */}
+          {/* Check-in / Check-out — uncontrolled with ref to bypass Safari onChange issue */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label
@@ -186,12 +215,19 @@ export default function BookingForm() {
               </label>
               <input
                 type="date"
-                value={checkIn}
+                ref={checkInRef}
+                defaultValue=""
                 min={today}
                 onChange={(e) => {
-                  setCheckIn(e.target.value);
-                  if (checkOut && checkOut <= e.target.value) setCheckOut("");
+                  setCheckInDisplay(e.target.value);
+                  // If checkout is before new checkin, reset checkout
+                  const co = checkOutRef.current?.value || checkOutDisplay;
+                  if (co && co <= e.target.value) {
+                    setCheckOutDisplay("");
+                    if (checkOutRef.current) checkOutRef.current.value = "";
+                  }
                 }}
+                onBlur={(e) => setCheckInDisplay(e.target.value)}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
@@ -205,9 +241,11 @@ export default function BookingForm() {
               </label>
               <input
                 type="date"
-                value={checkOut}
-                min={checkIn || today}
-                onChange={(e) => setCheckOut(e.target.value)}
+                ref={checkOutRef}
+                defaultValue=""
+                min={checkInRef.current?.value || checkInDisplay || today}
+                onChange={(e) => setCheckOutDisplay(e.target.value)}
+                onBlur={(e) => setCheckOutDisplay(e.target.value)}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
