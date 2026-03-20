@@ -16,7 +16,7 @@ export default function BookingForm() {
 
   const [nameLastname, setNameLastname] = useState("");
   const [tel, setTel] = useState("");
-  const [hotel, setHotel] = useState("");
+  const [hotel, setHotel] = useState(hotelNames[0] || "");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -64,7 +64,7 @@ export default function BookingForm() {
 
     setNameLastname("");
     setTel("");
-    setHotel("");
+    setHotel(hotelNames[0] || "");
     setCheckIn("");
     setCheckOut("");
     setGuests(1);
@@ -167,9 +167,6 @@ export default function BookingForm() {
               className={inputClass}
               style={{ fontFamily: "'Cormorant SC', serif", cursor: "pointer" }}
             >
-              <option value="" disabled>
-                Select a hotel
-              </option>
               {hotelNames.map((name) => (
                 <option key={name} value={name}>
                   {name}
