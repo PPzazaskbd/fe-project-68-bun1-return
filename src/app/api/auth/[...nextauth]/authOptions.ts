@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import userLogIn from "@/libs/userLogIn";
 
 export const authOptions: AuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET ?? "fallback-secret-key",
   providers: [
     CredentialsProvider({
       name: "Credentials",
