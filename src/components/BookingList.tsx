@@ -17,7 +17,7 @@ export default function BookingList() {
 
   if (bookings.length === 0) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-16 sm:py-20">
         <div className="flex items-center gap-4 justify-center mb-6">
           <div className="h-px w-16 bg-[#C8881E] opacity-30" />
           <div className="w-10 h-10 border border-[#C8881E] opacity-30 flex items-center justify-center">
@@ -26,7 +26,7 @@ export default function BookingList() {
           <div className="h-px w-16 bg-[#C8881E] opacity-30" />
         </div>
         <p
-          className="text-2xl tracking-wide mb-2"
+          className="text-xl sm:text-2xl tracking-wide mb-2"
           style={{ color: "#2A1005", fontFamily: "'Cormorant SC', serif", fontWeight: 400 }}
         >
           No Stays Booked Yet
@@ -42,25 +42,42 @@ export default function BookingList() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       {bookings.map((item: BookingItem, index: number) => {
         const nights = calcNights(item.checkIn, item.checkOut);
         return (
           <div
             key={index}
-            className="bg-white p-8 flex items-start justify-between gap-6"
+            className="bg-white p-4 sm:p-8 flex flex-col sm:flex-row items-start gap-4 sm:gap-6"
             style={{ border: "1px solid #D4AD7A" }}
           >
-            {/* Booking number */}
-            <div
-              className="text-3xl font-light shrink-0 w-12 text-center"
-              style={{ color: "#C8D8E8", fontFamily: "'Cormorant SC', serif" }}
-            >
-              {String(index + 1).padStart(2, "0")}
+            {/* Top row on mobile: booking number + cancel button */}
+            <div className="flex items-center justify-between w-full sm:w-auto sm:block">
+              {/* Booking number */}
+              <div
+                className="text-2xl sm:text-3xl font-light sm:w-12 text-center"
+                style={{ color: "#C8D8E8", fontFamily: "'Cormorant SC', serif" }}
+              >
+                {String(index + 1).padStart(2, "0")}
+              </div>
+
+              {/* Cancel button — visible inline on mobile */}
+              <button
+                onClick={() => dispatch(removeBooking(item))}
+                className="sm:hidden px-4 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
+                style={{
+                  border: "1px solid #C4973A",
+                  color: "#C8881E",
+                  background: "transparent",
+                  fontFamily: "'Cormorant SC', serif",
+                }}
+              >
+                Cancel
+              </button>
             </div>
 
             {/* Details grid */}
-            <div className="flex-1 grid sm:grid-cols-2 gap-4">
+            <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4 w-full">
               <div>
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
@@ -69,7 +86,7 @@ export default function BookingList() {
                   Guest
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
                 >
                   {item.nameLastname}
@@ -84,14 +101,14 @@ export default function BookingList() {
                   Contact
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.tel}
                 </p>
               </div>
 
-              <div className="sm:col-span-2">
+              <div className="col-span-2">
                 <p
                   className="text-xs tracking-[0.2em] uppercase mb-1"
                   style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
@@ -99,7 +116,7 @@ export default function BookingList() {
                   Hotel
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
                 >
                   {item.hotel}
@@ -114,7 +131,7 @@ export default function BookingList() {
                   Check-In
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.checkIn}
@@ -129,7 +146,7 @@ export default function BookingList() {
                   Check-Out
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.checkOut}
@@ -144,7 +161,7 @@ export default function BookingList() {
                   Duration
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {nights} {nights === 1 ? "Night" : "Nights"}
@@ -159,7 +176,7 @@ export default function BookingList() {
                   Guests
                 </p>
                 <p
-                  className="text-lg"
+                  className="text-base sm:text-lg"
                   style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
                 >
                   {item.guests} {item.guests === 1 ? "Guest" : "Guests"}
@@ -167,10 +184,10 @@ export default function BookingList() {
               </div>
             </div>
 
-            {/* Cancel */}
+            {/* Cancel button — desktop only */}
             <button
               onClick={() => dispatch(removeBooking(item))}
-              className="shrink-0 px-5 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
+              className="hidden sm:block shrink-0 px-5 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
               style={{
                 border: "1px solid #C4973A",
                 color: "#C8881E",

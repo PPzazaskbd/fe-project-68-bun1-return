@@ -17,14 +17,14 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
         className="overflow-hidden transition-all duration-500 group-hover:shadow-2xl"
         style={{ border: "1px solid #D4AD7A" }}
       >
-        <div className="w-full h-64 relative overflow-hidden">
+        <div className="w-full h-52 sm:h-64 relative overflow-hidden">
           {picture ? (
             <Image
               src={picture}
               alt={name}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes="(max-width: 768px) 100vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, 33vw"
             />
           ) : (
             <div
@@ -52,11 +52,11 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
           </div>
         </div>
 
-        <div className="p-6" style={{ background: "#FFFDF8" }}>
+        <div className="p-4 sm:p-6" style={{ background: "#FFFDF8" }}>
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <h2
-                className="text-xl mb-1 tracking-wide"
+                className="text-lg sm:text-xl mb-1 tracking-wide"
                 style={{
                   fontFamily: "'Cormorant SC', serif",
                   color: "#130900",
@@ -75,7 +75,7 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
             </div>
             <div className="text-right shrink-0">
               <p
-                className="text-lg"
+                className="text-base sm:text-lg"
                 style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
               >
                 ฿{dailyrate?.toLocaleString()}
@@ -90,20 +90,20 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
           </div>
 
           <div
-            className="mt-4 pt-4 flex items-center justify-between"
+            className="mt-3 sm:mt-4 pt-3 sm:pt-4 flex items-center justify-between"
             style={{ borderTop: "1px solid #F2E4C8" }}
           >
             <p
-              className="text-xs tracking-wide line-clamp-1"
+              className="text-xs tracking-wide line-clamp-1 min-w-0"
               style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
             >
               {address}
             </p>
             <span
-              className="text-xs tracking-[0.2em] uppercase group-hover:text-[#C8881E] transition-colors shrink-0 ml-3"
+              className="text-xs tracking-[0.2em] uppercase group-hover:text-[#C8881E] transition-colors shrink-0 ml-2 sm:ml-3"
               style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif" }}
             >
-              Book Now →
+              Book →
             </span>
           </div>
         </div>

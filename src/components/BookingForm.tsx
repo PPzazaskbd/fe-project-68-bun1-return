@@ -112,7 +112,7 @@ export default function BookingForm() {
     <div className="w-full max-w-lg">
       {success && (
         <div
-          className="mb-8 py-4 px-6 text-center"
+          className="mb-6 sm:mb-8 py-4 px-5 sm:px-6 text-center"
           style={{ background: "#F2E4C8", border: "1px solid #C8881E" }}
         >
           <p
@@ -131,7 +131,7 @@ export default function BookingForm() {
       )}
 
       <div
-        className="bg-white p-10 shadow-lg"
+        className="bg-white p-6 sm:p-10 shadow-lg"
         style={{ border: "1px solid #D4AD7A" }}
       >
         <div className="flex items-center gap-3 mb-8">

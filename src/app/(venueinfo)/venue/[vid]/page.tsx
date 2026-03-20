@@ -24,7 +24,7 @@ export default async function HotelDetailPage({
   return (
     <main className="min-h-screen" style={{ background: "#FDF6EC" }}>
       {/* Hero */}
-      <div className="w-full h-[480px] flex items-end justify-start relative overflow-hidden">
+      <div className="w-full h-[260px] sm:h-[380px] md:h-[480px] flex items-end justify-start relative overflow-hidden">
         {hotel.picture ? (
           <Image
             src={hotel.picture}
@@ -43,15 +43,15 @@ export default async function HotelDetailPage({
           className="absolute inset-0"
           style={{ background: "linear-gradient(to top, rgba(19,9,0,0.88) 0%, rgba(19,9,0,0.2) 60%, transparent 100%)" }}
         />
-        <div className="relative z-10 px-12 pb-12">
+        <div className="relative z-10 px-5 sm:px-12 pb-6 sm:pb-12">
           <p
-            className="text-sm tracking-[0.4em] uppercase mb-2"
+            className="text-xs sm:text-sm tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-1 sm:mb-2"
             style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif" }}
           >
             {hotel.district} · {hotel.province}
           </p>
           <h1
-            className="text-5xl md:text-6xl tracking-wide"
+            className="text-3xl sm:text-5xl md:text-6xl tracking-wide"
             style={{ fontFamily: "'Cormorant SC', serif", fontWeight: 400, color: "#F0D49A" }}
           >
             {hotel.name}
@@ -60,10 +60,10 @@ export default async function HotelDetailPage({
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-8 py-16 grid md:grid-cols-2 gap-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-10 sm:py-16 grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16">
         {/* Left: Hotel details */}
         <div>
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-6 sm:mb-8">
             <div className="h-px flex-1" style={{ background: "rgba(200,136,30,0.3)" }} />
             <span
               className="text-xs tracking-[0.3em] uppercase"
@@ -74,12 +74,12 @@ export default async function HotelDetailPage({
             <div className="h-px flex-1" style={{ background: "rgba(200,136,30,0.3)" }} />
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:gap-6">
             <div className="border-b pb-4" style={{ borderColor: "#D4AD7A" }}>
               <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
                 Address
               </p>
-              <p className="text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
+              <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
                 {hotel.address}
               </p>
             </div>
@@ -88,7 +88,7 @@ export default async function HotelDetailPage({
               <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
                 Location
               </p>
-              <p className="text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
+              <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
                 {hotel.district}, {hotel.province} {hotel.postalcode}
               </p>
             </div>
@@ -97,7 +97,7 @@ export default async function HotelDetailPage({
               <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
                 Reservations
               </p>
-              <p className="text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
+              <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
                 {hotel.tel}
               </p>
             </div>
@@ -106,7 +106,7 @@ export default async function HotelDetailPage({
               <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
                 Rate From
               </p>
-              <p className="text-3xl" style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}>
+              <p className="text-2xl sm:text-3xl" style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}>
                 ฿{hotel.dailyrate?.toLocaleString()}
                 <span className="text-base ml-1" style={{ color: "#9C6240", fontWeight: 400 }}>
                   / night
@@ -117,9 +117,9 @@ export default async function HotelDetailPage({
         </div>
 
         {/* Right: CTA */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5 sm:gap-6">
           <div
-            className="w-full h-64 relative overflow-hidden"
+            className="w-full h-48 sm:h-64 relative overflow-hidden"
             style={{ border: "1px solid #D4AD7A" }}
           >
             {hotel.picture && (
@@ -134,7 +134,7 @@ export default async function HotelDetailPage({
 
           <Link href={`/booking?venue=${encodeURIComponent(hotel.name)}`}>
             <button
-              className="w-full py-4 tracking-[0.3em] uppercase text-sm transition-all hover:opacity-90"
+              className="w-full py-3 sm:py-4 tracking-[0.3em] uppercase text-sm transition-all hover:opacity-90"
               style={{
                 background: "#C8881E",
                 color: "#130900",
