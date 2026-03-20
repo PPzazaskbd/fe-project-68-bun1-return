@@ -23,7 +23,9 @@ export default function VenueCatalog() {
           key={item.id.toString()}
           vid={item.id.toString()}
           name={item.name}
-          picture={item.picture ?? ""}
+          address={item.address ?? ""}
+          province={item.province ?? ""}
+          dailyrate={item.dailyrate ?? 0}
         />
       ))}
     </div>
