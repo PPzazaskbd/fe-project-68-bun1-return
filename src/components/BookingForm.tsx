@@ -1,16 +1,23 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
-import { addBooking } from "@/redux/features/bookSlice";
+import { useSession } from "next-auth/react";
 import { BookingItem } from "@/interface";
 import { useSearchParams } from "next/navigation";
 import hotels from "@/data/hotels";
 
+const STORAGE_KEY = "bun1_bookings";
+function loadBookings(): BookingItem[] {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+}
+function saveBookings(items: BookingItem[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
+}
+
 const hotelNames = hotels.data.map((h) => h.name);
 
 export default function BookingForm() {
-  const dispatch = useDispatch();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const preselectedHotel = searchParams.get("venue") || "";
 
@@ -110,8 +117,10 @@ export default function BookingForm() {
       return;
     }
 
-    const newBooking: BookingItem = { id: Date.now().toString(), nameLastname, tel, hotel, checkIn, checkOut, guests };
-    dispatch(addBooking(newBooking));
+    const userEmail = session?.user?.email || "guest";
+    const newBooking: BookingItem = { id: Date.now().toString(), nameLastname, tel, hotel, checkIn, checkOut, guests, userEmail };
+    const existing = loadBookings();
+    saveBookings([...existing, newBooking]);
 
     setNameLastname("");
     setTel("");

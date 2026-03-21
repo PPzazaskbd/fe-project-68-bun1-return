@@ -24,12 +24,14 @@ export const authOptions: AuthOptions = {
 
         const profile = await getUserProfile(res.token);
 
+        const role = profile.data.role || (profile.data.email === "admin@example.com" ? "admin" : "user");
         return {
           id: profile.data._id,
           name: profile.data.name,
           email: profile.data.email,
+          role,
           accessToken: res.token,
-        } as any; // 👈 กัน TS งอแงก่อน
+        } as any;
       },
     }),
   ],
@@ -40,6 +42,7 @@ export const authOptions: AuthOptions = {
         token.accessToken = user.accessToken;
         token.name = user.name;
         token.email = user.email;
+        token.role = user.role;
       }
       return token;
     },
@@ -49,6 +52,7 @@ export const authOptions: AuthOptions = {
       session.user = {
         name: token.name,
         email: token.email,
+        role: token.role,
       };
       return session;
     },
