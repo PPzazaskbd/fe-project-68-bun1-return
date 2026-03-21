@@ -19,14 +19,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://a08-venue-explorer-backend.vercel.app/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, tel, email, password }),
-        }
-      );
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, tel, email, password }),
+      });
       const data = await res.json();
 
       if (res.ok && data.success !== false) {

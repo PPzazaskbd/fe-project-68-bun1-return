@@ -69,8 +69,16 @@ export default function BookingForm() {
       setError("Please enter your guest name.");
       return;
     }
+    if (/\d/.test(nameLastname)) {
+      setError("Guest name must contain letters only, no numbers.");
+      return;
+    }
     if (!tel.trim()) {
       setError("Please enter your contact number.");
+      return;
+    }
+    if (!/^\d+$/.test(tel.trim())) {
+      setError("Contact number must contain digits only.");
       return;
     }
     if (!hotel) {
@@ -174,10 +182,13 @@ export default function BookingForm() {
             <input
               type="text"
               value={nameLastname}
-              onChange={(e) => setNameLastname(e.target.value)}
+              onChange={(e) => {
+                // Strip digits as user types
+                setNameLastname(e.target.value.replace(/\d/g, ""));
+              }}
               className={inputClass}
               style={{ fontFamily: "'Cormorant SC', serif" }}
-              placeholder="Full name"
+              placeholder="Full name (letters only)"
             />
           </div>
 
@@ -192,10 +203,13 @@ export default function BookingForm() {
             <input
               type="tel"
               value={tel}
-              onChange={(e) => setTel(e.target.value)}
+              onChange={(e) => {
+                // Strip non-digits as user types
+                setTel(e.target.value.replace(/\D/g, ""));
+              }}
               className={inputClass}
               style={{ fontFamily: "'Cormorant SC', serif" }}
-              placeholder="Phone number"
+              placeholder="Numbers only"
             />
           </div>
 
