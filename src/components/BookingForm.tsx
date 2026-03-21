@@ -26,6 +26,9 @@ export default function BookingForm() {
   const checkOutRef = useRef<HTMLInputElement>(null);
   const [checkInDisplay, setCheckInDisplay] = useState("");
   const [checkOutDisplay, setCheckOutDisplay] = useState("");
+  // Safari shows today on empty date inputs — switch type text↔date on focus/blur
+  const [checkInType, setCheckInType] = useState("text");
+  const [checkOutType, setCheckOutType] = useState("text");
 
   useEffect(() => {
     if (preselectedHotel) {
@@ -107,6 +110,8 @@ export default function BookingForm() {
     setHotel(hotelNames[0] || "");
     setCheckInDisplay("");
     setCheckOutDisplay("");
+    setCheckInType("text");
+    setCheckOutType("text");
     if (checkInRef.current) checkInRef.current.value = "";
     if (checkOutRef.current) checkOutRef.current.value = "";
     setGuests(1);
@@ -226,9 +231,11 @@ export default function BookingForm() {
                 Check-In
               </label>
               <input
-                type="date"
+                type={checkInType}
                 ref={checkInRef}
-                defaultValue=""
+                value={checkInType === "text" ? (checkInDisplay ? new Date(checkInDisplay).toLocaleDateString() : "") : checkInDisplay}
+                placeholder="Select date"
+                onFocus={() => setCheckInType("date")}
                 onChange={(e) => {
                   setCheckInDisplay(e.target.value);
                   const co = checkOutRef.current?.value || checkOutDisplay;
@@ -237,7 +244,12 @@ export default function BookingForm() {
                     if (checkOutRef.current) checkOutRef.current.value = "";
                   }
                 }}
-                onBlur={(e) => setCheckInDisplay(e.target.value)}
+                onBlur={(e) => {
+                  const val = e.target.value || checkInRef.current?.value || "";
+                  setCheckInDisplay(val);
+                  if (!val) setCheckInType("text");
+                }}
+                readOnly={checkInType === "text"}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
@@ -250,11 +262,17 @@ export default function BookingForm() {
                 Check-Out
               </label>
               <input
-                type="date"
+                type={checkOutType}
                 ref={checkOutRef}
-                defaultValue=""
+                value={checkOutType === "text" ? (checkOutDisplay ? new Date(checkOutDisplay).toLocaleDateString() : "") : checkOutDisplay}
+                placeholder="Select date"
+                onFocus={() => setCheckOutType("date")}
                 onChange={(e) => setCheckOutDisplay(e.target.value)}
-                onBlur={(e) => setCheckOutDisplay(e.target.value)}
+                onBlur={(e) => {
+                  const val = e.target.value || checkOutRef.current?.value || "";
+                  setCheckOutDisplay(val);
+                  if (!val) setCheckOutType("text");
+                }}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
