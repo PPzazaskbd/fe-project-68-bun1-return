@@ -26,6 +26,9 @@ export default function BookingForm() {
   const checkOutRef = useRef<HTMLInputElement>(null);
   const [checkInDisplay, setCheckInDisplay] = useState("");
   const [checkOutDisplay, setCheckOutDisplay] = useState("");
+  // Safari shows today on empty date inputs — switch type text↔date on focus/blur
+  const [checkInType, setCheckInType] = useState("text");
+  const [checkOutType, setCheckOutType] = useState("text");
 
   useEffect(() => {
     if (preselectedHotel) {
@@ -82,12 +85,24 @@ export default function BookingForm() {
       setError("Please select a check-out date.");
       return;
     }
+    if (checkIn < today) {
+      setError("Check-in date cannot be in the past.");
+      return;
+    }
     if (checkOut <= checkIn) {
       setError("Check-out date must be after check-in date.");
       return;
     }
 
-    const newBooking: BookingItem = { nameLastname, tel, hotel, checkIn, checkOut, guests };
+    const nights = Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (nights > 3) {
+      setError("Bookings are limited to a maximum of 3 nights.");
+      return;
+    }
+
+    const newBooking: BookingItem = { id: Date.now().toString(), nameLastname, tel, hotel, checkIn, checkOut, guests };
     dispatch(addBooking(newBooking));
 
     setNameLastname("");
@@ -95,6 +110,8 @@ export default function BookingForm() {
     setHotel(hotelNames[0] || "");
     setCheckInDisplay("");
     setCheckOutDisplay("");
+    setCheckInType("text");
+    setCheckOutType("text");
     if (checkInRef.current) checkInRef.current.value = "";
     if (checkOutRef.current) checkOutRef.current.value = "";
     setGuests(1);
@@ -214,20 +231,25 @@ export default function BookingForm() {
                 Check-In
               </label>
               <input
-                type="date"
+                type={checkInType}
                 ref={checkInRef}
-                defaultValue=""
-                min={today}
+                value={checkInType === "text" ? (checkInDisplay ? new Date(checkInDisplay).toLocaleDateString() : "") : checkInDisplay}
+                placeholder="Select date"
+                onFocus={() => setCheckInType("date")}
                 onChange={(e) => {
                   setCheckInDisplay(e.target.value);
-                  // If checkout is before new checkin, reset checkout
                   const co = checkOutRef.current?.value || checkOutDisplay;
                   if (co && co <= e.target.value) {
                     setCheckOutDisplay("");
                     if (checkOutRef.current) checkOutRef.current.value = "";
                   }
                 }}
-                onBlur={(e) => setCheckInDisplay(e.target.value)}
+                onBlur={(e) => {
+                  const val = e.target.value || checkInRef.current?.value || "";
+                  setCheckInDisplay(val);
+                  if (!val) setCheckInType("text");
+                }}
+                readOnly={checkInType === "text"}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />
@@ -240,12 +262,17 @@ export default function BookingForm() {
                 Check-Out
               </label>
               <input
-                type="date"
+                type={checkOutType}
                 ref={checkOutRef}
-                defaultValue=""
-                min={checkInRef.current?.value || checkInDisplay || today}
+                value={checkOutType === "text" ? (checkOutDisplay ? new Date(checkOutDisplay).toLocaleDateString() : "") : checkOutDisplay}
+                placeholder="Select date"
+                onFocus={() => setCheckOutType("date")}
                 onChange={(e) => setCheckOutDisplay(e.target.value)}
-                onBlur={(e) => setCheckOutDisplay(e.target.value)}
+                onBlur={(e) => {
+                  const val = e.target.value || checkOutRef.current?.value || "";
+                  setCheckOutDisplay(val);
+                  if (!val) setCheckOutType("text");
+                }}
                 className={inputClass}
                 style={{ fontFamily: "'Cormorant SC', serif" }}
               />

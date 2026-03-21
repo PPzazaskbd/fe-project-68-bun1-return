@@ -14,7 +14,7 @@ export const bookSlice = createSlice({
   initialState,
   reducers: {
     addBooking: (state, action: PayloadAction<BookingItem>) => {
-      const newBooking = action.payload;
+      const newBooking = { ...action.payload, id: action.payload.id || Date.now().toString() };
       const index = state.bookItems.findIndex(
         (item) =>
           item.hotel === newBooking.hotel &&
@@ -24,6 +24,12 @@ export const bookSlice = createSlice({
         state.bookItems[index] = newBooking;
       } else {
         state.bookItems.push(newBooking);
+      }
+    },
+    updateBooking: (state, action: PayloadAction<{ id: string; item: BookingItem }>) => {
+      const index = state.bookItems.findIndex((b) => b.id === action.payload.id);
+      if (index !== -1) {
+        state.bookItems[index] = { ...action.payload.item, id: action.payload.id };
       }
     },
     removeBooking: (state, action: PayloadAction<BookingItem>) => {
@@ -41,5 +47,5 @@ export const bookSlice = createSlice({
   },
 });
 
-export const { addBooking, removeBooking } = bookSlice.actions;
+export const { addBooking, updateBooking, removeBooking } = bookSlice.actions;
 export default bookSlice.reducer;
