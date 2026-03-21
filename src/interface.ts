@@ -6,6 +6,7 @@ export interface BookingItem {
   checkIn: string;
   checkOut: string;
   guests: number;
+  userEmail?: string;
 }
 
 export interface VenueItem {
