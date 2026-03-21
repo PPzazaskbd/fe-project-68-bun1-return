@@ -82,6 +82,10 @@ export default function BookingForm() {
       setError("Please select a check-out date.");
       return;
     }
+    if (checkIn < today) {
+      setError("Check-in date cannot be in the past.");
+      return;
+    }
     if (checkOut <= checkIn) {
       setError("Check-out date must be after check-in date.");
       return;
@@ -225,10 +229,8 @@ export default function BookingForm() {
                 type="date"
                 ref={checkInRef}
                 defaultValue=""
-                min={today}
                 onChange={(e) => {
                   setCheckInDisplay(e.target.value);
-                  // If checkout is before new checkin, reset checkout
                   const co = checkOutRef.current?.value || checkOutDisplay;
                   if (co && co <= e.target.value) {
                     setCheckOutDisplay("");
@@ -251,7 +253,6 @@ export default function BookingForm() {
                 type="date"
                 ref={checkOutRef}
                 defaultValue=""
-                min={checkInRef.current?.value || checkInDisplay || today}
                 onChange={(e) => setCheckOutDisplay(e.target.value)}
                 onBlur={(e) => setCheckOutDisplay(e.target.value)}
                 className={inputClass}

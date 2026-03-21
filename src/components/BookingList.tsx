@@ -223,7 +223,6 @@ export default function BookingList({ isAdmin = false }: { isAdmin?: boolean }) 
                       type="date"
                       ref={checkInRef}
                       defaultValue={editState.checkIn}
-                      min={today}
                       onChange={(e) => setEditState({ ...editState, checkIn: e.target.value })}
                       onBlur={(e) => setEditState({ ...editState, checkIn: e.target.value })}
                       className={inputClass}
@@ -238,7 +237,6 @@ export default function BookingList({ isAdmin = false }: { isAdmin?: boolean }) 
                       type="date"
                       ref={checkOutRef}
                       defaultValue={editState.checkOut}
-                      min={editState.checkIn || today}
                       onChange={(e) => setEditState({ ...editState, checkOut: e.target.value })}
                       onBlur={(e) => setEditState({ ...editState, checkOut: e.target.value })}
                       className={inputClass}
