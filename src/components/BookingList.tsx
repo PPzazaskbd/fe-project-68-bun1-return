@@ -1,9 +1,13 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import { removeBooking } from "@/redux/features/bookSlice";
+import { removeBooking, updateBooking } from "@/redux/features/bookSlice";
 import { BookingItem } from "@/interface";
+import hotels from "@/data/hotels";
+
+const hotelNames = hotels.data.map((h) => h.name);
 
 function calcNights(checkIn: string, checkOut: string) {
   if (!checkIn || !checkOut) return 0;
@@ -11,9 +15,70 @@ function calcNights(checkIn: string, checkOut: string) {
   return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
 }
 
-export default function BookingList() {
+const today = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+})();
+
+const labelClass = "text-xs tracking-[0.2em] uppercase";
+const inputClass =
+  "border-b border-[#C8881E] bg-transparent py-1 text-[#130900] focus:outline-none focus:border-[#130900] transition-colors text-sm w-full";
+
+interface EditState {
+  nameLastname: string;
+  tel: string;
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+}
+
+export default function BookingList({ isAdmin = false }: { isAdmin?: boolean }) {
   const dispatch = useDispatch();
   const bookings = useSelector((state: RootState) => state.book.bookItems);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [editError, setEditError] = useState("");
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
+
+  const startEdit = (item: BookingItem) => {
+    setEditingId(item.id || null);
+    setEditState({
+      nameLastname: item.nameLastname,
+      tel: item.tel,
+      hotel: item.hotel,
+      checkIn: item.checkIn,
+      checkOut: item.checkOut,
+      guests: item.guests,
+    });
+    setEditError("");
+  };
+
+  const saveEdit = (item: BookingItem) => {
+    if (!editState || !item.id) return;
+    const checkIn = checkInRef.current?.value || editState.checkIn;
+    const checkOut = checkOutRef.current?.value || editState.checkOut;
+
+    if (!editState.nameLastname.trim()) { setEditError("Guest name is required."); return; }
+    if (!editState.tel.trim()) { setEditError("Contact number is required."); return; }
+    if (!checkIn) { setEditError("Check-in date is required."); return; }
+    if (!checkOut) { setEditError("Check-out date is required."); return; }
+    if (checkOut <= checkIn) { setEditError("Check-out must be after check-in."); return; }
+
+    const nights = Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (nights > 3) { setEditError("Maximum stay is 3 nights."); return; }
+
+    dispatch(updateBooking({
+      id: item.id,
+      item: { ...editState, checkIn, checkOut, id: item.id },
+    }));
+    setEditingId(null);
+    setEditState(null);
+    setEditError("");
+  };
 
   if (bookings.length === 0) {
     return (
@@ -45,158 +110,213 @@ export default function BookingList() {
     <div className="flex flex-col gap-4 sm:gap-6">
       {bookings.map((item: BookingItem, index: number) => {
         const nights = calcNights(item.checkIn, item.checkOut);
+        const isEditing = editingId === item.id;
+
         return (
           <div
-            key={index}
-            className="bg-white p-4 sm:p-8 flex flex-col sm:flex-row items-start gap-4 sm:gap-6"
+            key={item.id || index}
+            className="bg-white p-4 sm:p-8 flex flex-col gap-4"
             style={{ border: "1px solid #D4AD7A" }}
           >
-            {/* Top row on mobile: booking number + cancel button */}
-            <div className="flex items-center justify-between w-full sm:w-auto sm:block">
-              {/* Booking number */}
+            {/* Header row */}
+            <div className="flex items-center justify-between">
               <div
-                className="text-2xl sm:text-3xl font-light sm:w-12 text-center"
+                className="text-2xl sm:text-3xl font-light"
                 style={{ color: "#C8D8E8", fontFamily: "'Cormorant SC', serif" }}
               >
                 {String(index + 1).padStart(2, "0")}
               </div>
-
-              {/* Cancel button — visible inline on mobile */}
-              <button
-                onClick={() => dispatch(removeBooking(item))}
-                className="sm:hidden px-4 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
-                style={{
-                  border: "1px solid #C4973A",
-                  color: "#C8881E",
-                  background: "transparent",
-                  fontFamily: "'Cormorant SC', serif",
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-
-            {/* Details grid */}
-            <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4 w-full">
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
+              <div className="flex gap-2">
+                {!isEditing && (
+                  <button
+                    onClick={() => startEdit(item)}
+                    className="px-4 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#130900] hover:text-white"
+                    style={{
+                      border: "1px solid #9C6240",
+                      color: "#9C6240",
+                      background: "transparent",
+                      fontFamily: "'Cormorant SC', serif",
+                    }}
+                  >
+                    Edit
+                  </button>
+                )}
+                {isEditing && (
+                  <button
+                    onClick={() => { setEditingId(null); setEditState(null); setEditError(""); }}
+                    className="px-4 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#9C6240] hover:text-white"
+                    style={{
+                      border: "1px solid #9C6240",
+                      color: "#9C6240",
+                      background: "transparent",
+                      fontFamily: "'Cormorant SC', serif",
+                    }}
+                  >
+                    Discard
+                  </button>
+                )}
+                <button
+                  onClick={() => dispatch(removeBooking(item))}
+                  className="px-4 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
+                  style={{
+                    border: "1px solid #C4973A",
+                    color: "#C8881E",
+                    background: "transparent",
+                    fontFamily: "'Cormorant SC', serif",
+                  }}
                 >
-                  Guest
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
-                >
-                  {item.nameLastname}
-                </p>
-              </div>
-
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Contact
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  {item.tel}
-                </p>
-              </div>
-
-              <div className="col-span-2">
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Hotel
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
-                >
-                  {item.hotel}
-                </p>
-              </div>
-
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Check-In
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  {item.checkIn}
-                </p>
-              </div>
-
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Check-Out
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  {item.checkOut}
-                </p>
-              </div>
-
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Duration
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  {nights} {nights === 1 ? "Night" : "Nights"}
-                </p>
-              </div>
-
-              <div>
-                <p
-                  className="text-xs tracking-[0.2em] uppercase mb-1"
-                  style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  Guests
-                </p>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-                >
-                  {item.guests} {item.guests === 1 ? "Guest" : "Guests"}
-                </p>
+                  Cancel
+                </button>
               </div>
             </div>
 
-            {/* Cancel button — desktop only */}
-            <button
-              onClick={() => dispatch(removeBooking(item))}
-              className="hidden sm:block shrink-0 px-5 py-2 text-xs tracking-[0.25em] uppercase transition-all hover:bg-[#0D1B2A] hover:text-white"
-              style={{
-                border: "1px solid #C4973A",
-                color: "#C8881E",
-                background: "transparent",
-                fontFamily: "'Cormorant SC', serif",
-              }}
-            >
-              Cancel
-            </button>
+            {isEditing && editState ? (
+              /* ── Edit form ── */
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                      Guest Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editState.nameLastname}
+                      onChange={(e) => setEditState({ ...editState, nameLastname: e.target.value })}
+                      className={inputClass}
+                      style={{ fontFamily: "'Cormorant SC', serif" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={editState.tel}
+                      onChange={(e) => setEditState({ ...editState, tel: e.target.value })}
+                      className={inputClass}
+                      style={{ fontFamily: "'Cormorant SC', serif" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                    Hotel
+                  </label>
+                  <select
+                    value={editState.hotel}
+                    onChange={(e) => setEditState({ ...editState, hotel: e.target.value })}
+                    className={inputClass}
+                    style={{ fontFamily: "'Cormorant SC', serif", cursor: "pointer" }}
+                  >
+                    {hotelNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                      Check-In
+                    </label>
+                    <input
+                      type="date"
+                      ref={checkInRef}
+                      defaultValue={editState.checkIn}
+                      min={today}
+                      onChange={(e) => setEditState({ ...editState, checkIn: e.target.value })}
+                      onBlur={(e) => setEditState({ ...editState, checkIn: e.target.value })}
+                      className={inputClass}
+                      style={{ fontFamily: "'Cormorant SC', serif" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                      Check-Out
+                    </label>
+                    <input
+                      type="date"
+                      ref={checkOutRef}
+                      defaultValue={editState.checkOut}
+                      min={editState.checkIn || today}
+                      onChange={(e) => setEditState({ ...editState, checkOut: e.target.value })}
+                      onBlur={(e) => setEditState({ ...editState, checkOut: e.target.value })}
+                      className={inputClass}
+                      style={{ fontFamily: "'Cormorant SC', serif" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className={labelClass} style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>
+                    Guests
+                  </label>
+                  <div className="flex items-center gap-4 border-b border-[#C8881E] py-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditState({ ...editState, guests: Math.max(1, editState.guests - 1) })}
+                      className="w-7 h-7 flex items-center justify-center"
+                      style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
+                    >−</button>
+                    <span className="flex-1 text-center text-sm" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>
+                      {editState.guests} {editState.guests === 1 ? "Guest" : "Guests"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditState({ ...editState, guests: Math.min(10, editState.guests + 1) })}
+                      className="w-7 h-7 flex items-center justify-center"
+                      style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
+                    >+</button>
+                  </div>
+                </div>
+
+                {editError && (
+                  <p className="text-sm" style={{ color: "#8B3A3A", fontFamily: "'Cormorant SC', serif" }}>
+                    {editError}
+                  </p>
+                )}
+
+                <button
+                  onClick={() => saveEdit(item)}
+                  className="py-3 text-white tracking-[0.3em] uppercase text-xs transition-opacity hover:opacity-80"
+                  style={{ background: "#130900", fontFamily: "'Cormorant SC', serif" }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            ) : (
+              /* ── View mode ── */
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Guest</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}>{item.nameLastname}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Contact</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>{item.tel}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Hotel</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}>{item.hotel}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Check-In</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>{item.checkIn}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Check-Out</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>{item.checkOut}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Duration</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>{nights} {nights === 1 ? "Night" : "Nights"}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}>Guests</p>
+                  <p className="text-base sm:text-lg" style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}>{item.guests} {item.guests === 1 ? "Guest" : "Guests"}</p>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

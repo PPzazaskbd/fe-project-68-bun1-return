@@ -1,4 +1,5 @@
 export interface BookingItem {
+  id?: string;
   nameLastname: string;
   tel: string;
   hotel: string;

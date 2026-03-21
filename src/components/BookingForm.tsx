@@ -87,7 +87,15 @@ export default function BookingForm() {
       return;
     }
 
-    const newBooking: BookingItem = { nameLastname, tel, hotel, checkIn, checkOut, guests };
+    const nights = Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (nights > 3) {
+      setError("Bookings are limited to a maximum of 3 nights.");
+      return;
+    }
+
+    const newBooking: BookingItem = { id: Date.now().toString(), nameLastname, tel, hotel, checkIn, checkOut, guests };
     dispatch(addBooking(newBooking));
 
     setNameLastname("");
