@@ -9,28 +9,32 @@ export interface BookingItem {
   userEmail?: string;
 }
 
-export interface VenueItem {
+
+
+
+export interface HotelItem {
   _id: string;
-  id: string;
   name: string;
   address: string;
   district: string;
   province: string;
   postalcode: string;
+  region: string;       // NEW
   tel: string;
-  picture: string;
-  dailyrate: number;
+  description: string;  // NEW
+  imgSrc: string;       // CHANGED from picture
+  price: number;        // CHANGED from dailyrate
   __v: number;
 }
 
-export interface VenueJson {
+export interface HotelJson {
   success: boolean;
   count: number;
   pagination: object;
-  data: VenueItem[];
+  data: HotelItem[];
 }
 
-export interface SingleVenueJson {
+export interface SingleHotelJson {
   success: boolean;
-  data: VenueItem;
+  data: HotelItem;
 }
