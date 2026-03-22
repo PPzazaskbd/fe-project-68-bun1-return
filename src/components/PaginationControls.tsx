@@ -1,5 +1,7 @@
 "use client";
 
+import Arrow from "./Arrow";
+
 interface PaginationControlsProps {
   currentPage: number;
   totalPages: number;
@@ -7,36 +9,7 @@ interface PaginationControlsProps {
   onNext: () => void;
 }
 
-function Arrow({
-  direction,
-  disabled,
-}: {
-  direction: "left" | "right";
-  disabled?: boolean;
-}) {
-  const rotation = direction === "left" ? "rotate(180deg)" : "none";
 
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      style={{
-        transform: rotation,
-        opacity: disabled ? 0.45 : 1,
-      }}
-    >
-      <path
-        d="M6 12h10m-4-4 4 4-4 4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
 
 export default function PaginationControls({
   currentPage,

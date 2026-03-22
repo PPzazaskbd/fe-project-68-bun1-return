@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -10,6 +11,7 @@ import {
   loadBookings,
   saveBookings,
 } from "@/libs/bookingStorage";
+import { buildDateRangeHref, getDateRangeFromSearchParams } from "@/libs/dateRangeParams";
 
 interface BookingFormProps {
   hotels: HotelItem[];
@@ -27,6 +29,7 @@ export default function BookingForm({ hotels }: BookingFormProps) {
   const today = getTodayIsoDate();
   const defaultCheckOut = addDays(today, 1);
   const initialHotel = hotels[0]?.name ?? "";
+  const dateRange = getDateRangeFromSearchParams(searchParams, today);
 
   const [nameLastname, setNameLastname] = useState("");
   const [tel, setTel] = useState("");
@@ -64,6 +67,29 @@ export default function BookingForm({ hotels }: BookingFormProps) {
     () => hotels.find((item) => item.name === hotel),
     [hotel, hotels],
   );
+  const backHref = useMemo(() => {
+    const hotelId = searchParams.get("hotelId");
+
+    if (hotelId) {
+      return buildDateRangeHref(`/venue/${encodeURIComponent(hotelId)}`, dateRange);
+    }
+
+    const venue = searchParams.get("venue");
+
+    if (!venue) {
+      return buildDateRangeHref("/venue", dateRange);
+    }
+
+    const decodedVenue = decodeURIComponent(venue);
+    const matchedHotel = hotels.find(
+      (item) => item.name.toLowerCase() === decodedVenue.toLowerCase(),
+    );
+    const matchedHotelId = matchedHotel?.id || matchedHotel?._id;
+
+    return matchedHotelId
+      ? buildDateRangeHref(`/venue/${encodeURIComponent(matchedHotelId)}`, dateRange)
+      : buildDateRangeHref("/venue", dateRange);
+  }, [dateRange, hotels, searchParams]);
 
   const nights = Math.max(1, calculateNights(checkIn, checkOut));
   const total = (selectedHotel?.price ?? 0) * nights;
@@ -127,6 +153,14 @@ export default function BookingForm({ hotels }: BookingFormProps) {
 
   return (
     <div className="w-full max-w-[62rem]">
+      <Link
+        href={backHref}
+        className="figma-text-action mb-5 inline-flex items-center gap-2 font-figma-copy text-[1.35rem] text-[var(--figma-red)]"
+      >
+        <span aria-hidden="true">{"<"}</span>
+        <span>Go Back</span>
+      </Link>
+
       {success ? (
         <div className="figma-feedback figma-feedback-success mb-6 px-6 py-4">
           <p className="font-figma-nav text-[1.35rem] tracking-[0.08em]">
