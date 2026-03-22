@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 interface CardProps {
@@ -21,14 +20,13 @@ export default function Card({
   return (
     <article className="figma-card-surface border border-[rgba(171,25,46,0.08)] bg-[#fff8f3]">
       <Link href={`/venue/${vid}`} className="block">
-        <div className="relative aspect-[616/275] bg-[#d9d9d9]">
+        <div className="aspect-[616/275] overflow-hidden bg-[#efe3d8]">
           {imgSrc ? (
-            <Image
+            <img
               src={imgSrc}
               alt={name}
-              fill
-              sizes="(max-width: 1024px) 100vw, 616px"
-              className="figma-card-image object-cover"
+              loading="lazy"
+              className="figma-card-image block h-full w-full object-cover"
             />
           ) : (
             <div className="flex h-full items-center justify-center font-figma-copy text-[1.8rem] text-[var(--figma-ink-soft)]">

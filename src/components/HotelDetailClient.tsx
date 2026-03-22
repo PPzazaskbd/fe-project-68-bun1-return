@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { HotelItem } from "@/interface";
@@ -48,15 +47,13 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         <section className="mt-8 border border-[rgba(171,25,46,0.08)] bg-[rgba(255,245,244,0.45)] p-5 sm:p-10">
           <div className="grid gap-8 xl:grid-cols-[1.4fr_0.86fr]">
             <div>
-              <div className="relative aspect-[896/400] overflow-hidden bg-[#d9d9d9]">
+              <div className="aspect-[896/400] overflow-hidden bg-[#efe3d8]">
                 {hotel.imgSrc ? (
-                  <Image
+                  <img
                     src={hotel.imgSrc}
                     alt={hotel.name}
-                    fill
-                    priority
-                    sizes="(max-width: 1280px) 100vw, 896px"
-                    className="object-cover"
+                    fetchPriority="high"
+                    className="block h-full w-full object-cover"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center font-figma-copy text-[2rem] text-[var(--figma-ink-soft)]">

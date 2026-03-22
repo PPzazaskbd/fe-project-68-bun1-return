@@ -326,7 +326,7 @@ button:active {
 }
 
 .figma-card-surface:hover .figma-card-image {
-  transform: scale(1.04);
+  transform: scale(1.02);
   filter: saturate(1.04);
 }
 
