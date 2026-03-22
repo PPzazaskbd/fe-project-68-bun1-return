@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [tel, setTel] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +21,7 @@ export default function RegisterPage() {
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, tel, email, password }),
+        body: JSON.stringify({ name, telephone, email, password }),
       });
       const data = await response.json();
 
@@ -61,9 +61,9 @@ export default function RegisterPage() {
           <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
             <span className="sr-only">Phone Number</span>
             <input
-              type="tel"
-              value={tel}
-              onChange={(event) => setTel(event.target.value.replace(/\D/g, ""))}
+              type="telephone"
+              value={telephone}
+              onChange={(event) => setTelephone(event.target.value.replace(/\D/g, ""))}
               className="figma-input"
               placeholder="Phone Number"
               required
