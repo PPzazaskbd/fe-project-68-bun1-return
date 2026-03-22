@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 interface CardProps {
-  vid: string;
+  href: string;
   name: string;
   address: string;
   province: string;
@@ -10,7 +10,7 @@ interface CardProps {
 }
 
 export default function Card({
-  vid,
+  href,
   name,
   address,
   province,
@@ -19,7 +19,7 @@ export default function Card({
 }: CardProps) {
   return (
     <article className="figma-card-surface border border-[rgba(171,25,46,0.08)] bg-[#fff8f3]">
-      <Link href={`/venue/${vid}`} className="block">
+      <Link href={href} className="block">
         <div className="aspect-[616/275] overflow-hidden bg-[#efe3d8]">
           {imgSrc ? (
             <img
@@ -50,7 +50,7 @@ export default function Card({
         </div>
 
         <Link
-          href={`/venue/${vid}`}
+          href={href}
           className="figma-button figma-card-detail-button px-4 py-1 font-figma-copy text-[1.15rem] normal-case sm:px-5 sm:text-[1.25rem]"
         >
           detail
