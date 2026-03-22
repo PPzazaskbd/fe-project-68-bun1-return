@@ -1,152 +1,207 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { useLayoutEffect, useRef, useState } from "react";
 
-const navLink =
-  "text-xs tracking-[0.25em] uppercase transition-colors hover:text-[#E8B84B]";
-const navStyle = { color: "#C4956A", fontFamily: "'Cormorant SC', serif" };
+type NavKey = "hotels" | "bookings" | "auth";
+
+function UserIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    >
+      <path d="M15.5 7.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" />
+      <path d="M5.5 18.5c1.7-2.6 4-3.9 6.5-3.9s4.8 1.3 6.5 3.9" />
+    </svg>
+  );
+}
+
+function getLinkClass(isCurrent: boolean) {
+  return `figma-link font-figma-nav text-[1.15rem] sm:text-[1.35rem] ${isCurrent ? "figma-link-current" : ""}`;
+}
 
 export default function TopMenu() {
+  const pathname = usePathname();
   const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "admin";
-  const [menuOpen, setMenuOpen] = useState(false);
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
+  const bookingsHref = isAdmin ? "/admin" : "/mybooking";
+  const authHref = session ? "/" : "/login";
+  const isHotelsActive = pathname.startsWith("/venue");
+  const isBookingsActive =
+    pathname === "/mybooking" || pathname === "/admin" || pathname === "/booking";
+  const isAuthActive = !session && (pathname === "/login" || pathname === "/register");
+  const activeKey: NavKey | null = isHotelsActive
+    ? "hotels"
+    : isBookingsActive
+      ? "bookings"
+      : isAuthActive
+        ? "auth"
+        : null;
+
+  const shellRef = useRef<HTMLDivElement>(null);
+  const linkRefs = useRef<Partial<Record<NavKey, HTMLElement | null>>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
+
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const shell = shellRef.current;
+      const activeElement = activeKey ? linkRefs.current[activeKey] : null;
+
+      if (!shell || !activeElement) {
+        setIndicatorStyle((current) => ({ ...current, opacity: 0 }));
+        return;
+      }
+
+      const shellRect = shell.getBoundingClientRect();
+      const activeRect = activeElement.getBoundingClientRect();
+
+      setIndicatorStyle({
+        left: activeRect.left - shellRect.left,
+        width: activeRect.width,
+        opacity: 1,
+      });
+    };
+
+    updateIndicator();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateIndicator();
+    });
+
+    if (shellRef.current) {
+      resizeObserver.observe(shellRef.current);
+    }
+
+    Object.values(linkRefs.current).forEach((node) => {
+      if (node) {
+        resizeObserver.observe(node);
+      }
+    });
+
+    const frameId = window.requestAnimationFrame(updateIndicator);
+    window.addEventListener("resize", updateIndicator);
+    window.addEventListener("load", updateIndicator);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", updateIndicator);
+      window.removeEventListener("load", updateIndicator);
+    };
+  }, [activeKey, pathname, session]);
 
   return (
-    <nav
-      className="w-full relative"
+    <header
+      className="sticky top-0 z-30 border-b"
       style={{
-        background: "#130900",
-        borderBottom: "1px solid rgba(200,136,30,0.25)",
+        background: "var(--figma-soft)",
+        borderColor: "rgba(171, 25, 46, 0.08)",
       }}
     >
-      {/* Main row */}
-      <div className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-4">
-        {/* Left: sign in / register / sign out */}
-        <div className="hidden sm:flex items-center gap-4 min-w-[80px]">
-          {session ? (
-            <button
-              onClick={() => signOut()}
-              className={`${navLink} bg-transparent border-none cursor-pointer`}
-              style={navStyle}
+      <div
+        ref={shellRef}
+        className="figma-shell relative flex min-h-[72px] items-center justify-between gap-4 py-3 sm:min-h-[80px] sm:py-4"
+      >
+        <div className="flex items-center gap-3 sm:gap-5">
+          <Link href="/" className="shrink-0">
+            <Image
+              src="/img/Bun_JS_logo.png"
+              alt="Bun1"
+              width={34}
+              height={34}
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              priority
+            />
+          </Link>
+
+          <div className="flex items-center gap-3 text-[var(--figma-red)] sm:gap-4">
+            <Link
+              href="/"
+              className="font-figma-nav text-[1.15rem] tracking-[0.08em] sm:text-[1.4rem]"
             >
-              Sign Out
-            </button>
-          ) : (
-            <>
-              <Link href="/login" className={navLink} style={navStyle}>Sign In</Link>
-              <span style={{ color: "#5C2E0E" }}>|</span>
-              <Link href="/register" className={navLink} style={navStyle}>Register</Link>
-            </>
-          )}
-        </div>
-
-        {/* Center: Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/img/Bun_JS_logo.png" alt="Bun" width={24} height={24} className="sm:w-7 sm:h-7" />
-          <span
-            className="text-xl sm:text-2xl tracking-[0.4em] uppercase"
-            style={{ color: "#F0D49A", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
-          >
-            Bun1
-          </span>
-        </Link>
-
-        {/* Right: nav links + hamburger */}
-        <div className="flex items-center gap-4 sm:gap-8">
-          <div className="hidden sm:flex items-center gap-6 md:gap-8">
-            <Link href="/venue" className={navLink} style={navStyle}>Hotels</Link>
-            <Link href="/booking" className={navLink} style={navStyle}>Book Stay</Link>
-            <Link href="/mybooking" className={navLink} style={navStyle}>My Stays</Link>
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={navLink}
-                style={{ color: "#E8B84B", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Admin
-              </Link>
-            )}
-            {session && (
-              <span className="text-xs tracking-[0.2em]" style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif" }}>
-                {session.user?.name}
-              </span>
-            )}
+              BUN1
+            </Link>
+            <span
+              aria-hidden="true"
+              className="hidden h-8 w-px sm:block"
+              style={{ background: "rgba(171, 25, 46, 0.28)" }}
+            />
+            <Link
+              href="/venue"
+              ref={(node) => {
+                linkRefs.current.hotels = node;
+              }}
+              className={getLinkClass(isHotelsActive)}
+            >
+              HOTELS
+            </Link>
           </div>
-
-          {/* Hamburger */}
-          <button
-            className="sm:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
-          >
-            <span className="block w-6 h-px transition-all" style={{ background: "#C4956A", transform: menuOpen ? "rotate(45deg) translateY(4px)" : "none" }} />
-            <span className="block w-6 h-px transition-all" style={{ background: "#C4956A", opacity: menuOpen ? 0 : 1 }} />
-            <span className="block w-6 h-px transition-all" style={{ background: "#C4956A", transform: menuOpen ? "rotate(-45deg) translateY(-4px)" : "none" }} />
-          </button>
         </div>
-      </div>
 
-      {/* Mobile dropdown */}
-      {menuOpen && (
-        <div className="sm:hidden flex flex-col gap-0" style={{ background: "#1a0d02", borderTop: "1px solid rgba(200,136,30,0.15)" }}>
-          {[
-            { href: "/venue", label: "Hotels" },
-            { href: "/booking", label: "Book Stay" },
-            { href: "/mybooking", label: "My Stays" },
-          ].map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMenuOpen(false)}
-              className="px-6 py-4 text-xs tracking-[0.3em] uppercase transition-colors hover:text-[#E8B84B]"
-              style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif", borderBottom: "1px solid rgba(200,136,30,0.1)" }}
-            >
-              {label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="px-6 py-4 text-xs tracking-[0.3em] uppercase transition-colors hover:text-[#E8B84B]"
-              style={{ color: "#E8B84B", fontFamily: "'Cormorant SC', serif", borderBottom: "1px solid rgba(200,136,30,0.1)" }}
-            >
-              Admin
-            </Link>
-          )}
+        <nav className="flex flex-wrap items-center justify-end gap-4 text-[var(--figma-red)] sm:gap-6">
+          <Link
+            href={bookingsHref}
+            ref={(node) => {
+              linkRefs.current.bookings = node;
+            }}
+            className={getLinkClass(isBookingsActive)}
+          >
+            BOOKINGS
+          </Link>
+
           {session ? (
             <button
-              onClick={() => { setMenuOpen(false); signOut(); }}
-              className="px-6 py-4 text-xs tracking-[0.3em] uppercase transition-colors hover:text-[#E8B84B] text-left bg-transparent border-none cursor-pointer"
-              style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif", borderBottom: "1px solid rgba(200,136,30,0.1)" }}
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className={getLinkClass(false)}
             >
-              Sign Out {session.user?.name ? `(${session.user.name})` : ""}
+              LOG OUT
             </button>
           ) : (
-            <>
-              <Link
-                href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="px-6 py-4 text-xs tracking-[0.3em] uppercase transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif", borderBottom: "1px solid rgba(200,136,30,0.1)" }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMenuOpen(false)}
-                className="px-6 py-4 text-xs tracking-[0.3em] uppercase transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Register
-              </Link>
-            </>
+            <Link
+              href={authHref}
+              ref={(node) => {
+                linkRefs.current.auth = node;
+              }}
+              className={getLinkClass(isAuthActive)}
+            >
+              LOG IN
+            </Link>
           )}
-        </div>
-      )}
-    </nav>
+
+          <Link
+            href={session ? bookingsHref : "/login"}
+            className="figma-card-action text-[var(--figma-red)]"
+            aria-label={session ? "Open bookings" : "Open login"}
+          >
+            <UserIcon />
+          </Link>
+        </nav>
+
+        <span
+          aria-hidden="true"
+          className="figma-nav-indicator"
+          style={{
+            width: `${indicatorStyle.width}px`,
+            transform: `translateX(${indicatorStyle.left}px)`,
+            opacity: indicatorStyle.opacity,
+          }}
+        />
+      </div>
+    </header>
   );
 }
