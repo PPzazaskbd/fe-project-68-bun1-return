@@ -1,29 +1,41 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HotelItem, HotelJson } from "@/interface";
 import Card from "./Card";
 import DateRangeToolbar from "./DateRangeToolbar";
 import PaginationControls from "./PaginationControls";
 import { getTodayIsoDate } from "@/libs/bookingStorage";
-
-interface CardPanelProps {
-  hotelsJson: HotelJson;
-}
+import {
+  buildDateRangeHref,
+  createDateRangeSearchParams,
+  getDateRangeFromSearchParams,
+  normalizeDateRange,
+} from "@/libs/dateRangeParams";
 
 const ITEMS_PER_PAGE = 4;
 
-function addDays(base: string, days: number) {
-  const date = new Date(base);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return (
+    target.isContentEditable ||
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT"
+  );
 }
 
-export default function CardPanel({ hotelsJson }: CardPanelProps) {
+export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
   const hotels = hotelsJson.data ?? [];
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const today = getTodayIsoDate();
-  const [fromDate, setFromDate] = useState(today);
-  const [toDate, setToDate] = useState(addDays(today, 1));
+  const urlDateRange = getDateRangeFromSearchParams(searchParams, today);
+  const [fromDate, setFromDate] = useState(urlDateRange.checkIn);
+  const [toDate, setToDate] = useState(urlDateRange.checkOut);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
 
@@ -55,6 +67,57 @@ export default function CardPanel({ hotelsJson }: CardPanelProps) {
     }
   }, [page, totalPages]);
 
+  useEffect(() => {
+    setFromDate(urlDateRange.checkIn);
+    setToDate(urlDateRange.checkOut);
+  }, [urlDateRange.checkIn, urlDateRange.checkOut]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isEditableTarget(event.target)
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft" && page > 1) {
+        event.preventDefault();
+        setPage((current) => Math.max(1, current - 1));
+      }
+
+      if (event.key === "ArrowRight" && page < totalPages) {
+        event.preventDefault();
+        setPage((current) => Math.min(totalPages, current + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [page, totalPages]);
+
+  const syncDateRange = (nextCheckIn: string, nextCheckOut: string) => {
+    const normalizedRange = normalizeDateRange(nextCheckIn, nextCheckOut, today);
+
+    setFromDate(normalizedRange.checkIn);
+    setToDate(normalizedRange.checkOut);
+
+    const nextSearchParams = createDateRangeSearchParams(
+      searchParams,
+      normalizedRange,
+    );
+
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, {
+      scroll: false,
+    });
+  };
+
   if (hotels.length === 0) {
     return (
       <div className="py-16 text-center font-figma-copy text-[1.6rem] text-[var(--figma-ink-soft)]">
@@ -70,12 +133,11 @@ export default function CardPanel({ hotelsJson }: CardPanelProps) {
           fromDate={fromDate}
           toDate={toDate}
           onFromDateChange={(value) => {
-            setFromDate(value);
-            if (value && value >= toDate) {
-              setToDate(addDays(value, 1));
-            }
+            syncDateRange(value, toDate);
           }}
-          onToDateChange={setToDate}
+          onToDateChange={(value) => {
+            syncDateRange(fromDate, value);
+          }}
         />
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
@@ -102,7 +164,10 @@ export default function CardPanel({ hotelsJson }: CardPanelProps) {
             {visibleHotels.map((hotel: HotelItem) => (
               <Card
                 key={hotel.id || hotel._id}
-                vid={hotel.id || hotel._id}
+                href={buildDateRangeHref(`/venue/${hotel.id || hotel._id}`, {
+                  checkIn: fromDate,
+                  checkOut: toDate,
+                })}
                 name={hotel.name}
                 address={hotel.address}
                 province={hotel.province}
