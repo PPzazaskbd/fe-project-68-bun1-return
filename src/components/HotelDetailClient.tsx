@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HotelItem } from "@/interface";
 import DateRangeToolbar from "./DateRangeToolbar";
 import Arrow from "./Arrow";
 import { calculateNights, getTodayIsoDate } from "@/libs/bookingStorage";
+import { createBooking } from "@/libs/bookingsApi";
 import {
   buildDateRangeHref,
   createDateRangeSearchParams,
@@ -18,7 +20,14 @@ interface HotelDetailClientProps {
   hotel: HotelItem;
 }
 
+const BOOKING_ARMING_DELAY_MS = 2000;
+
+function generateRandomRoomNumber() {
+  return String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
+}
+
 export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,20 +35,77 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   const urlDateRange = getDateRangeFromSearchParams(searchParams, today);
   const [fromDate, setFromDate] = useState(urlDateRange.checkIn);
   const [toDate, setToDate] = useState(urlDateRange.checkOut);
+  const [guestsAdult, setGuestsAdult] = useState(urlDateRange.guestsAdult);
+  const [guestsChild, setGuestsChild] = useState(urlDateRange.guestsChild);
+  const [bookingState, setBookingState] = useState<"idle" | "arming" | "submitting">("idle");
+  const [bookingError, setBookingError] = useState("");
+  const bookingTimerRef = useRef<number | null>(null);
   const hotelId = hotel.id || hotel._id;
   const nights = Math.max(1, calculateNights(fromDate, toDate));
   const total = hotel.price * nights;
+  const bookingStatusLabel =
+    bookingState === "arming"
+      ? "Click to Cancel"
+      : bookingState === "submitting"
+        ? "Sending to backend..."
+        : "";
+  const bookingSearchParams = useMemo(() => {
+    const nextParams = createDateRangeSearchParams(
+      new URLSearchParams(),
+      {
+        checkIn: fromDate,
+        checkOut: toDate,
+        guestsAdult,
+        guestsChild,
+      },
+    );
+    nextParams.set("hotelId", hotelId);
+    nextParams.set("venue", hotel.name);
+    return nextParams;
+  }, [fromDate, guestsAdult, guestsChild, hotel.name, hotelId, toDate]);
+  const callbackUrl = useMemo(
+    () => `${pathname}?${bookingSearchParams.toString()}`,
+    [bookingSearchParams, pathname],
+  );
 
   useEffect(() => {
     setFromDate(urlDateRange.checkIn);
     setToDate(urlDateRange.checkOut);
-  }, [urlDateRange.checkIn, urlDateRange.checkOut]);
+    setGuestsAdult(urlDateRange.guestsAdult);
+    setGuestsChild(urlDateRange.guestsChild);
+  }, [
+    urlDateRange.checkIn,
+    urlDateRange.checkOut,
+    urlDateRange.guestsAdult,
+    urlDateRange.guestsChild,
+  ]);
 
-  const syncDateRange = (nextCheckIn: string, nextCheckOut: string) => {
-    const normalizedRange = normalizeDateRange(nextCheckIn, nextCheckOut, today);
+  useEffect(() => {
+    return () => {
+      if (bookingTimerRef.current !== null) {
+        window.clearTimeout(bookingTimerRef.current);
+      }
+    };
+  }, []);
+
+  const syncToolbarState = (
+    nextCheckIn: string,
+    nextCheckOut: string,
+    nextGuestsAdult: number,
+    nextGuestsChild: number,
+  ) => {
+    const normalizedRange = normalizeDateRange(
+      nextCheckIn,
+      nextCheckOut,
+      today,
+      nextGuestsAdult,
+      nextGuestsChild,
+    );
 
     setFromDate(normalizedRange.checkIn);
     setToDate(normalizedRange.checkOut);
+    setGuestsAdult(normalizedRange.guestsAdult);
+    setGuestsChild(normalizedRange.guestsChild);
 
     const nextSearchParams = createDateRangeSearchParams(
       searchParams,
@@ -51,17 +117,80 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
     });
   };
 
+  const handleCancelBooking = () => {
+    if (bookingTimerRef.current !== null) {
+      window.clearTimeout(bookingTimerRef.current);
+      bookingTimerRef.current = null;
+    }
+
+    setBookingState("idle");
+  };
+
+  const handleBook = () => {
+    setBookingError("");
+
+    if (!session?.user?.token) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      return;
+    }
+
+    if (bookingState === "arming") {
+      handleCancelBooking();
+      return;
+    }
+
+    if (bookingState === "submitting") {
+      return;
+    }
+
+    const roomNumber = generateRandomRoomNumber();
+    setBookingState("arming");
+
+    bookingTimerRef.current = window.setTimeout(async () => {
+      bookingTimerRef.current = null;
+      setBookingState("submitting");
+
+      try {
+        await createBooking(hotelId, session.user.token, {
+          startDate: fromDate,
+          nights,
+          roomNumber,
+          guestsAdult,
+          guestsChild,
+        });
+
+        router.push("/mybooking?booked=1");
+        router.refresh();
+      } catch (submitError) {
+        setBookingError(
+          submitError instanceof Error
+            ? submitError.message
+            : "Booking service unavailable.",
+        );
+        setBookingState("idle");
+      }
+    }, BOOKING_ARMING_DELAY_MS);
+  };
+
   return (
     <main className="figma-page py-6 sm:py-8">
       <div className="figma-shell">
         <DateRangeToolbar
           fromDate={fromDate}
           toDate={toDate}
+          guestsAdult={guestsAdult}
+          guestsChild={guestsChild}
           onFromDateChange={(value) => {
-            syncDateRange(value, toDate);
+            syncToolbarState(value, toDate, guestsAdult, guestsChild);
           }}
           onToDateChange={(value) => {
-            syncDateRange(fromDate, value);
+            syncToolbarState(fromDate, value, guestsAdult, guestsChild);
+          }}
+          onGuestsAdultChange={(value) => {
+            syncToolbarState(fromDate, toDate, value, guestsChild);
+          }}
+          onGuestsChildChange={(value) => {
+            syncToolbarState(fromDate, toDate, guestsAdult, value);
           }}
         />
 
@@ -114,17 +243,58 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
               </div>
 
               <div className="space-y-4">
-                <Link
-                  href={`/booking?hotelId=${encodeURIComponent(hotelId)}&venue=${encodeURIComponent(hotel.name)}&checkIn=${fromDate}&checkOut=${toDate}`}
+                <div className="space-y-3">
+                  <div className="flex min-h-[1.75rem] items-center justify-center">
+                    {bookingStatusLabel ? (
+                      <p
+                        className={`text-center font-figma-copy text-[1.05rem] sm:text-[1.15rem] ${
+                          bookingState === "arming"
+                            ? "text-[var(--figma-red)]"
+                            : "text-[var(--figma-ink-soft)]"
+                        }`}
+                      >
+                        {bookingStatusLabel}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div
+                    className={`h-[6px] overflow-hidden rounded-full ${
+                      bookingState === "arming"
+                        ? "bg-[rgba(171,25,46,0.12)]"
+                        : "bg-transparent"
+                    }`}
+                  >
+                    {bookingState === "arming" ? (
+                      <div
+                        className="figma-booking-progress h-full w-full rounded-full"
+                        style={{
+                          animationDuration: `${BOOKING_ARMING_DELAY_MS}ms`,
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleBook}
+                  disabled={bookingState === "submitting"}
                   className="figma-button figma-button-prominent flex h-[4.5rem] w-full font-figma-nav text-[2rem]"
                 >
-                  BOOK
-                </Link>
+                  {bookingState === "idle"
+                    ? "BOOK"
+                    : bookingState === "arming"
+                      ? "CANCEL"
+                      : "BOOKING"}
+                </button>
 
                 <Link
                   href={buildDateRangeHref("/venue", {
                     checkIn: fromDate,
                     checkOut: toDate,
+                    guestsAdult,
+                    guestsChild,
                   })}
                   className="figma-text-action inline-flex items-center gap-2 font-figma-copy text-[1.35rem] text-[var(--figma-red)]"
                 >
@@ -133,6 +303,12 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                   </span>
                   <span>Go Back</span>
                 </Link>
+
+                {bookingError ? (
+                  <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.15rem]">
+                    {bookingError}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>

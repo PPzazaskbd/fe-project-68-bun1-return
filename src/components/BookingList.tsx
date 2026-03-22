@@ -3,14 +3,19 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BookingItem, HotelItem } from "@/interface";
+import { useSearchParams } from "next/navigation";
+import { BackendBookingItem, BookingItem, HotelItem } from "@/interface";
+import BookingListSkeleton from "./BookingListSkeleton";
 import PaginationControls from "./PaginationControls";
 import {
   calculateNights,
   formatBookingDate,
-  loadBookings,
-  saveBookings,
 } from "@/libs/bookingStorage";
+import {
+  deleteBooking,
+  getBookings,
+  updateBooking,
+} from "@/libs/bookingsApi";
 
 interface BookingListProps {
   hotels: HotelItem[];
@@ -18,12 +23,11 @@ interface BookingListProps {
 }
 
 interface EditState {
-  nameLastname: string;
-  tel: string;
-  hotel: string;
+  roomNumber: string;
   checkIn: string;
   checkOut: string;
-  guests: number;
+  guestsAdult: number;
+  guestsChild: number;
 }
 
 const ITEMS_PER_PAGE = 3;
@@ -34,32 +38,116 @@ function addDays(base: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function toIsoDate(value: string) {
+  return value.slice(0, 10);
+}
+
+function getReferenceValue(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  if (value && typeof value === "object") {
+    const candidate = value as {
+      _id?: unknown;
+      id?: unknown;
+      name?: unknown;
+      title?: unknown;
+    };
+
+    if (typeof candidate._id === "string" || typeof candidate._id === "number") {
+      return String(candidate._id);
+    }
+
+    if (typeof candidate.id === "string" || typeof candidate.id === "number") {
+      return String(candidate.id);
+    }
+
+    if (typeof candidate.name === "string" || typeof candidate.name === "number") {
+      return String(candidate.name);
+    }
+
+    if (typeof candidate.title === "string" || typeof candidate.title === "number") {
+      return String(candidate.title);
+    }
+  }
+
+  return "";
+}
+
+function normalizeLookupValue(value: unknown) {
+  return getReferenceValue(value).trim().toLowerCase();
+}
+
+function findHotelByReference(reference: unknown, hotels: HotelItem[]) {
+  const normalizedReference = normalizeLookupValue(reference);
+
+  if (!normalizedReference) {
+    return undefined;
+  }
+
+  return hotels.find((hotel) => {
+    const candidates = [hotel._id, hotel.id, hotel.name]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => normalizeLookupValue(value));
+
+    return candidates.includes(normalizedReference);
+  });
+}
+
+function mapBackendBooking(item: BackendBookingItem, hotels: HotelItem[]): BookingItem {
+  const hotelId = getReferenceValue(item.hotel);
+  const matchedHotel = findHotelByReference(hotelId, hotels);
+  const startDate = toIsoDate(item.startDate);
+  const nights = Math.max(1, item.nights || 1);
+
+  const hotelLabel =
+    matchedHotel?.name ||
+    (item.hotel && typeof item.hotel === "object" && "name" in item.hotel
+      ? getReferenceValue((item.hotel as { name?: unknown }).name)
+      : "") ||
+    hotelId ||
+    "Hotel unavailable";
+
+  const userId = getReferenceValue(item.user);
+
+  return {
+    id: item._id,
+    hotelId: hotelId || matchedHotel?._id || matchedHotel?.id || "",
+    userId,
+    hotel: hotelLabel,
+    checkIn: startDate,
+    checkOut: addDays(startDate, nights),
+    roomNumber: item.roomNumber || "-",
+    guestsAdult: typeof item.guestsAdult === "number" ? item.guestsAdult : 0,
+    guestsChild: typeof item.guestsChild === "number" ? item.guestsChild : 0,
+    nights,
+    totalPrice: item.totalPrice,
+    createdAt: item.createdAt ? toIsoDate(item.createdAt) : undefined,
+  };
+}
+
 export default function BookingList({
   hotels,
   isAdmin = false,
 }: BookingListProps) {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const searchParams = useSearchParams();
   const userEmail = session?.user?.email || "";
   const effectiveAdmin =
     isAdmin ||
     session?.user?.role === "admin" ||
     userEmail === "admin@example.com";
+  const token = session?.user?.token || "";
 
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
   const [editError, setEditError] = useState("");
+  const [listError, setListError] = useState("");
   const [savedBookingId, setSavedBookingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const allBookings = loadBookings();
-    const filteredBookings = effectiveAdmin
-      ? allBookings
-      : allBookings.filter((item) => item.userEmail === userEmail);
-
-    setBookings(filteredBookings);
-  }, [effectiveAdmin, userEmail]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!savedBookingId) return;
@@ -71,8 +159,61 @@ export default function BookingList({
     return () => window.clearTimeout(timeout);
   }, [savedBookingId]);
 
+  useEffect(() => {
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    if (!token) {
+      setBookings([]);
+      setIsLoading(false);
+      return;
+    }
+
+    let ignore = false;
+
+    const loadBookingItems = async () => {
+      setIsLoading(true);
+      setListError("");
+
+      try {
+        const backendBookings = await getBookings(token);
+
+        if (!ignore) {
+          setBookings(backendBookings.map((item) => mapBackendBooking(item, hotels)));
+        }
+      } catch (loadError) {
+        if (!ignore) {
+          setBookings([]);
+          setListError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Failed to load bookings.",
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadBookingItems();
+
+    return () => {
+      ignore = true;
+    };
+  }, [hotels, sessionStatus, token]);
+
   const hotelMap = useMemo(
-    () => new Map(hotels.map((hotel) => [hotel.name, hotel])),
+    () =>
+      new Map(
+        hotels.flatMap((hotel) =>
+          [hotel._id, hotel.id, hotel.name]
+            .filter((value): value is string => Boolean(value))
+            .map((value) => [normalizeLookupValue(value), hotel] as const),
+        ),
+      ),
     [hotels],
   );
 
@@ -82,40 +223,58 @@ export default function BookingList({
     page * ITEMS_PER_PAGE,
   );
 
-  const handleRemove = (bookingId?: string) => {
-    if (!bookingId) return;
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
-    const updated = loadBookings().filter((item) => item.id !== bookingId);
-    saveBookings(updated);
+  const handleRemove = async (bookingId?: string) => {
+    if (!bookingId || !token) return;
 
-    setBookings((current) => current.filter((item) => item.id !== bookingId));
-    setSavedBookingId((current) => (current === bookingId ? null : current));
+    setListError("");
+
+    try {
+      await deleteBooking(bookingId, token);
+      setBookings((current) => current.filter((item) => item.id !== bookingId));
+      setSavedBookingId((current) => (current === bookingId ? null : current));
+    } catch (removeError) {
+      setListError(
+        removeError instanceof Error
+          ? removeError.message
+          : "Failed to delete booking.",
+      );
+    }
   };
 
   const handleStartEdit = (item: BookingItem) => {
     setEditingId(item.id || null);
     setEditState({
-      nameLastname: item.nameLastname,
-      tel: item.tel,
-      hotel: item.hotel,
+      roomNumber: item.roomNumber,
       checkIn: item.checkIn,
       checkOut: item.checkOut,
-      guests: item.guests,
+      guestsAdult: item.guestsAdult,
+      guestsChild: item.guestsChild,
     });
     setEditError("");
     setSavedBookingId(null);
   };
 
-  const handleSaveEdit = (item: BookingItem) => {
-    if (!editState || !item.id) return;
+  const handleSaveEdit = async (item: BookingItem) => {
+    if (!editState || !item.id || !token) return;
 
-    if (!editState.nameLastname.trim()) {
-      setEditError("Guest name is required.");
+    if (!editState.roomNumber.trim()) {
+      setEditError("Room number is required.");
       return;
     }
 
-    if (!editState.tel.trim() || !/^\d+$/.test(editState.tel.trim())) {
-      setEditError("Contact number must contain digits only.");
+    if (editState.guestsAdult < 1) {
+      setEditError("At least one adult guest is required.");
+      return;
+    }
+
+    if (editState.guestsChild < 0) {
+      setEditError("Child guest count cannot be negative.");
       return;
     }
 
@@ -130,41 +289,97 @@ export default function BookingList({
       return;
     }
 
-    const updatedItem: BookingItem = {
-      ...item,
-      ...editState,
-      nameLastname: editState.nameLastname.trim(),
-      tel: editState.tel.trim(),
-    };
+    try {
+      const updatedBooking = await updateBooking(item.id, token, {
+        startDate: editState.checkIn,
+        nights,
+        roomNumber: editState.roomNumber.trim(),
+        guestsAdult: editState.guestsAdult,
+        guestsChild: editState.guestsChild,
+      });
+      const normalizedBooking = mapBackendBooking(updatedBooking, hotels);
 
-    const allBookings = loadBookings().map((booking) =>
-      booking.id === item.id ? updatedItem : booking,
-    );
-    saveBookings(allBookings);
-    setBookings((current) =>
-      current.map((booking) => (booking.id === item.id ? updatedItem : booking)),
-    );
-    setEditingId(null);
-    setEditState(null);
-    setEditError("");
-    setSavedBookingId(item.id);
+      setBookings((current) =>
+        current.map((booking) =>
+          booking.id === item.id
+            ? {
+                ...booking,
+                ...normalizedBooking,
+              }
+            : booking,
+        ),
+      );
+      setEditingId(null);
+      setEditState(null);
+      setEditError("");
+      setSavedBookingId(item.id);
+      setListError("");
+    } catch (saveError) {
+      setEditError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to update booking.",
+      );
+    }
   };
+
+  if (isLoading) {
+    return <BookingListSkeleton />;
+  }
 
   if (bookings.length === 0) {
     return (
-      <div className="py-14 text-center font-figma-copy text-[1.6rem] text-[var(--figma-ink-soft)]">
-        No bookings yet.
+      <div className="space-y-4">
+        {searchParams.get("booked") === "1" ? (
+          <div className="figma-feedback figma-feedback-success">
+            <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
+              BOOKING CONFIRMED
+            </p>
+            <p className="mt-1 font-figma-copy text-[1.05rem]">
+              Your reservation was sent to the backend successfully.
+            </p>
+          </div>
+        ) : null}
+
+        {listError ? (
+          <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.2rem]">
+            {listError}
+          </p>
+        ) : null}
+
+        <div className="py-14 text-center font-figma-copy text-[1.6rem] text-[var(--figma-ink-soft)]">
+          No bookings yet.
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {searchParams.get("booked") === "1" ? (
+        <div className="figma-feedback figma-feedback-success mb-5">
+          <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
+            BOOKING CONFIRMED
+          </p>
+          <p className="mt-1 font-figma-copy text-[1.05rem]">
+            Your reservation was sent to the backend successfully.
+          </p>
+        </div>
+      ) : null}
+
+      {listError ? (
+        <p className="figma-feedback figma-feedback-error mb-5 font-figma-copy text-[1.2rem]">
+          {listError}
+        </p>
+      ) : null}
+
       <div className="space-y-6">
         {visibleBookings.map((item) => {
-          const hotel = hotelMap.get(item.hotel);
-          const nights = Math.max(1, calculateNights(item.checkIn, item.checkOut));
-          const total = (hotel?.price ?? 0) * nights;
+          const hotel =
+            hotelMap.get(normalizeLookupValue(item.hotelId)) ||
+            hotelMap.get(normalizeLookupValue(item.hotel));
+          const nights = item.nights ?? Math.max(1, calculateNights(item.checkIn, item.checkOut));
+          const total = item.totalPrice > 0 ? item.totalPrice : (hotel?.price ?? 0) * nights;
           const isEditing = editingId === item.id;
           const isRecentlySaved = savedBookingId === item.id;
 
@@ -207,29 +422,47 @@ export default function BookingList({
 
                 <div className="space-y-2 font-figma-copy text-[1.25rem] text-[var(--figma-ink)]">
                   <p className="text-[1.65rem] text-[var(--figma-ink)]">{item.hotel}</p>
-                  {effectiveAdmin ? (
-                    <p className="text-[1.25rem] text-[var(--figma-ink-soft)]">
-                      {item.nameLastname}
-                    </p>
-                  ) : null}
-                  <p>{item.tel}</p>
+                  <p>Room {item.roomNumber}</p>
+                  <p>
+                    {item.guestsAdult} adult{item.guestsAdult === 1 ? "" : "s"}
+                    {item.guestsChild > 0
+                      ? `, ${item.guestsChild} child${item.guestsChild === 1 ? "" : "ren"}`
+                      : ""}
+                  </p>
                   <p>{hotel?.address ?? "Address unavailable"}</p>
                   <p>
                     {formatBookingDate(item.checkIn)} to {formatBookingDate(item.checkOut)}
                   </p>
-                  {effectiveAdmin && item.userEmail ? (
-                    <p className="text-[1.1rem] text-[var(--figma-red)]">{item.userEmail}</p>
+                  {effectiveAdmin ? (
+                    <p className="text-[1.1rem] text-[var(--figma-red)]">
+                      User ID: {item.userId}
+                    </p>
+                  ) : null}
+                  {item.createdAt ? (
+                    <p className="text-[1.05rem] text-[var(--figma-ink-soft)]">
+                      Created {formatBookingDate(item.createdAt)}
+                    </p>
                   ) : null}
                 </div>
 
                 <div className="min-w-[9rem] border-l border-[rgba(171,25,46,0.12)] pl-5 font-figma-copy text-[1.25rem] text-[var(--figma-ink)]">
                   <p className="flex items-center justify-between gap-4">
-                    <span>$</span>
+                    <Image
+                      src="/thaiBaht.svg"
+                      alt="Thai Baht"
+                      width={20}
+                      height={20}
+                    />
                     <span>{total.toLocaleString()}</span>
                   </p>
                   <p className="mt-3 flex items-center justify-between gap-4">
-                    <span>#</span>
-                    <span>{item.guests}</span>
+                    <Image
+                      src="/roomNumber.svg"
+                      alt="Room number"
+                      width={20}
+                      height={20}
+                    />
+                    <span>{item.roomNumber}</span>
                   </p>
                 </div>
 
@@ -263,7 +496,7 @@ export default function BookingList({
 
                   <button
                     type="button"
-                    onClick={() => handleRemove(item.id)}
+                    onClick={() => void handleRemove(item.id)}
                     className="figma-button h-[3.1rem] w-[3.1rem] p-0 text-[1.25rem]"
                     aria-label="Delete booking"
                   >
@@ -283,73 +516,48 @@ export default function BookingList({
                   <div className="grid gap-5 md:grid-cols-2">
                     <input
                       type="text"
-                      value={editState.nameLastname}
+                      value={editState.roomNumber}
                       onChange={(event) =>
                         setEditState({
                           ...editState,
-                          nameLastname: event.target.value.replace(/\d/g, ""),
+                          roomNumber: event.target.value,
                         })
                       }
                       className="figma-input"
-                      placeholder="Guest Name"
+                      placeholder="Room Number"
+                    />
+
+                    <div className="font-figma-copy text-[1.15rem] text-[var(--figma-ink-soft)]">
+                      Hotel: {item.hotel}
+                    </div>
+
+                    <input
+                      type="number"
+                      min={1}
+                      value={editState.guestsAdult}
+                      onChange={(event) =>
+                        setEditState({
+                          ...editState,
+                          guestsAdult: Math.max(1, Number(event.target.value) || 1),
+                        })
+                      }
+                      className="figma-input"
+                      placeholder="Adult Guests"
                     />
 
                     <input
-                      type="tel"
-                      value={editState.tel}
+                      type="number"
+                      min={0}
+                      value={editState.guestsChild}
                       onChange={(event) =>
                         setEditState({
                           ...editState,
-                          tel: event.target.value.replace(/\D/g, ""),
+                          guestsChild: Math.max(0, Number(event.target.value) || 0),
                         })
                       }
                       className="figma-input"
-                      placeholder="Phone Number"
+                      placeholder="Child Guests"
                     />
-
-                    <select
-                      value={editState.hotel}
-                      onChange={(event) =>
-                        setEditState({ ...editState, hotel: event.target.value })
-                      }
-                      className="figma-input"
-                    >
-                      {hotels.map((hotelItem) => (
-                        <option key={hotelItem._id} value={hotelItem.name}>
-                          {hotelItem.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditState({
-                            ...editState,
-                            guests: Math.max(1, editState.guests - 1),
-                          })
-                        }
-                        className="figma-button-secondary flex h-10 w-10 items-center justify-center text-[1.5rem]"
-                      >
-                        -
-                      </button>
-                      <span className="font-figma-copy text-[1.3rem] text-[var(--figma-ink)]">
-                        {editState.guests} guest{editState.guests > 1 ? "s" : ""}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditState({
-                            ...editState,
-                            guests: Math.min(10, editState.guests + 1),
-                          })
-                        }
-                        className="figma-button-secondary flex h-10 w-10 items-center justify-center text-[1.5rem]"
-                      >
-                        +
-                      </button>
-                    </div>
 
                     <input
                       type="date"
@@ -387,7 +595,7 @@ export default function BookingList({
 
                   <button
                     type="button"
-                    onClick={() => handleSaveEdit(item)}
+                    onClick={() => void handleSaveEdit(item)}
                     className="figma-button figma-button-prominent mt-5 px-6 py-3 font-figma-nav text-[1.4rem]"
                   >
                     SAVE CHANGES

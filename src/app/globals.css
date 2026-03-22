@@ -123,6 +123,26 @@ button:active {
     opacity 0.2s ease;
 }
 
+@keyframes booking-progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.figma-booking-progress {
+  background: linear-gradient(90deg, #b71422 0%, #dc5c67 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  animation-name: booking-progress-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
 .figma-button {
   display: inline-flex;
   position: relative;
@@ -231,11 +251,28 @@ button:active {
 
 .figma-toolbar {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  align-items: flex-end;
+  gap: 1rem 1.5rem;
   border: 1px solid rgba(183, 20, 34, 0.08);
   background: rgba(255, 245, 244, 0.4);
   padding: 0.95rem 1.5rem;
+}
+
+.figma-toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.figma-toolbar-guests {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.figma-toolbar-field-compact {
+  min-width: 6rem;
 }
 
 .figma-toolbar-label {
@@ -253,6 +290,11 @@ button:active {
   color: var(--figma-ink);
   font-family: "Cormorant Infant", serif;
   font-size: 1.3rem;
+}
+
+.figma-toolbar-input-compact {
+  min-width: 6rem;
+  text-align: right;
 }
 
 .figma-toolbar-input:focus {
@@ -396,6 +438,10 @@ button:active {
     gap: 0.9rem 1rem;
   }
 
+  .figma-toolbar-guests {
+    margin-left: 0;
+  }
+
   .figma-toolbar-input {
     flex: 1 1 12rem;
   }
@@ -414,6 +460,21 @@ button:active {
     padding: 1rem;
   }
 
+  .figma-toolbar-field {
+    width: 100%;
+  }
+
+  .figma-toolbar-guests {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .figma-toolbar-field-compact {
+    min-width: 0;
+  }
+
   .figma-toolbar-label {
     font-size: 1.3rem;
   }
@@ -421,6 +482,11 @@ button:active {
   .figma-toolbar-input {
     min-width: 100%;
     font-size: 1.1rem;
+  }
+
+  .figma-toolbar-input-compact {
+    min-width: 0;
+    text-align: left;
   }
 
   .figma-input {

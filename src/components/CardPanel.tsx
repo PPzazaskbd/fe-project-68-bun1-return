@@ -36,6 +36,8 @@ export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
   const urlDateRange = getDateRangeFromSearchParams(searchParams, today);
   const [fromDate, setFromDate] = useState(urlDateRange.checkIn);
   const [toDate, setToDate] = useState(urlDateRange.checkOut);
+  const [guestsAdult, setGuestsAdult] = useState(urlDateRange.guestsAdult);
+  const [guestsChild, setGuestsChild] = useState(urlDateRange.guestsChild);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
 
@@ -70,7 +72,14 @@ export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
   useEffect(() => {
     setFromDate(urlDateRange.checkIn);
     setToDate(urlDateRange.checkOut);
-  }, [urlDateRange.checkIn, urlDateRange.checkOut]);
+    setGuestsAdult(urlDateRange.guestsAdult);
+    setGuestsChild(urlDateRange.guestsChild);
+  }, [
+    urlDateRange.checkIn,
+    urlDateRange.checkOut,
+    urlDateRange.guestsAdult,
+    urlDateRange.guestsChild,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -102,11 +111,24 @@ export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
     };
   }, [page, totalPages]);
 
-  const syncDateRange = (nextCheckIn: string, nextCheckOut: string) => {
-    const normalizedRange = normalizeDateRange(nextCheckIn, nextCheckOut, today);
+  const syncToolbarState = (
+    nextCheckIn: string,
+    nextCheckOut: string,
+    nextGuestsAdult: number,
+    nextGuestsChild: number,
+  ) => {
+    const normalizedRange = normalizeDateRange(
+      nextCheckIn,
+      nextCheckOut,
+      today,
+      nextGuestsAdult,
+      nextGuestsChild,
+    );
 
     setFromDate(normalizedRange.checkIn);
     setToDate(normalizedRange.checkOut);
+    setGuestsAdult(normalizedRange.guestsAdult);
+    setGuestsChild(normalizedRange.guestsChild);
 
     const nextSearchParams = createDateRangeSearchParams(
       searchParams,
@@ -132,11 +154,19 @@ export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
         <DateRangeToolbar
           fromDate={fromDate}
           toDate={toDate}
+          guestsAdult={guestsAdult}
+          guestsChild={guestsChild}
           onFromDateChange={(value) => {
-            syncDateRange(value, toDate);
+            syncToolbarState(value, toDate, guestsAdult, guestsChild);
           }}
           onToDateChange={(value) => {
-            syncDateRange(fromDate, value);
+            syncToolbarState(fromDate, value, guestsAdult, guestsChild);
+          }}
+          onGuestsAdultChange={(value) => {
+            syncToolbarState(fromDate, toDate, value, guestsChild);
+          }}
+          onGuestsChildChange={(value) => {
+            syncToolbarState(fromDate, toDate, guestsAdult, value);
           }}
         />
 
@@ -167,6 +197,8 @@ export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
                 href={buildDateRangeHref(`/venue/${hotel.id || hotel._id}`, {
                   checkIn: fromDate,
                   checkOut: toDate,
+                  guestsAdult,
+                  guestsChild,
                 })}
                 name={hotel.name}
                 address={hotel.address}
