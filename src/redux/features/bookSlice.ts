@@ -37,8 +37,9 @@ export const bookSlice = createSlice({
       state.bookItems = state.bookItems.filter(
         (item) =>
           !(
-            item.nameLastname === target.nameLastname &&
-            item.tel === target.tel &&
+            item.id === target.id &&
+            item.hotelId === target.hotelId &&
+            item.roomNumber === target.roomNumber &&
             item.hotel === target.hotel &&
             item.checkIn === target.checkIn
           )

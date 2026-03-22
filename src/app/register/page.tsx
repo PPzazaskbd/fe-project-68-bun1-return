@@ -1,21 +1,28 @@
 "use client";
 
+import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
+  const loginHref = buildAuthHref("/login", requestedCallbackUrl);
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/register", {
@@ -27,15 +34,35 @@ export default function RegisterPage() {
 
       if (!response.ok || data.success === false) {
         setError(data.message || data.msg || "Registration failed.");
+        setIsSubmitting(false);
         return;
       }
-
-      startTransition(() => {
-        router.push("/login?registered=1");
-      });
     } catch {
       setError("Registration service unavailable.");
+      setIsSubmitting(false);
+      return;
     }
+
+    try {
+      const response = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (response?.error) {
+        setError("Account created, but automatic sign-in failed. Please log in.");
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("Account created, but automatic sign-in failed. Please log in.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    router.push(callbackUrl);
+    router.refresh();
   };
 
   return (
@@ -103,21 +130,29 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isPending}
-            aria-busy={isPending}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
             className="figma-button figma-button-prominent mt-4 h-[2rem] w-full font-figma-nav text-[1.9rem] leading-none"
           >
-            {isPending ? "REGISTERING" : "REGISTER"}
+            {isSubmitting ? "REGISTERING" : "REGISTER"}
           </button>
         </form>
 
         <p className="mt-10 text-center font-figma-copy text-[1.5rem] text-[var(--figma-ink)]">
           Have an account?{" "}
-          <Link href="/login" className="text-[var(--figma-red)]">
+          <Link href={loginHref} className="text-[var(--figma-red)]">
             Log in
           </Link>
         </p>
       </section>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

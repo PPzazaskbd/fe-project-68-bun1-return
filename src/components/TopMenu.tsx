@@ -35,10 +35,12 @@ export default function TopMenu() {
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
   const bookingsHref = isAdmin ? "/admin" : "/mybooking";
+  const bookingsLinkHref = session
+    ? bookingsHref
+    : `/login?callbackUrl=${encodeURIComponent(bookingsHref)}`;
   const authHref = session ? "/" : "/login";
   const isHotelsActive = pathname.startsWith("/venue");
-  const isBookingsActive =
-    pathname === "/mybooking" || pathname === "/admin" || pathname === "/booking";
+  const isBookingsActive = pathname === "/mybooking" || pathname === "/admin";
   const isAuthActive = !session && (pathname === "/login" || pathname === "/register");
   const activeKey: NavKey | null = isHotelsActive
     ? "hotels"
@@ -154,7 +156,7 @@ export default function TopMenu() {
 
         <nav className="flex flex-wrap items-center justify-end gap-4 text-[var(--figma-red)] sm:gap-6">
           <Link
-            href={bookingsHref}
+            href={bookingsLinkHref}
             ref={(node) => {
               linkRefs.current.bookings = node;
             }}
@@ -184,7 +186,7 @@ export default function TopMenu() {
           )}
 
           <Link
-            href={session ? bookingsHref : "/login"}
+            href={bookingsLinkHref}
             className="figma-card-action text-[var(--figma-red)]"
             aria-label={session ? "Open bookings" : "Open login"}
           >

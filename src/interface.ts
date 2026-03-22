@@ -1,12 +1,18 @@
 export interface BookingItem {
   id?: string;
-  nameLastname: string;
-  tel: string;
+  hotelId: string;
+  userId: string;
   hotel: string;
   checkIn: string;
   checkOut: string;
-  guests: number;
+  roomNumber: string;
+  guestsAdult: number;
+  guestsChild: number;
+  nights: number;
+  totalPrice: number;
+  createdAt?: string;
   userEmail?: string;
+  userName?: string;
 }
 
 export interface UserProfile {
@@ -45,4 +51,29 @@ export interface HotelJson {
 export interface SingleHotelJson {
   success: boolean;
   data: HotelItem;
+}
+
+export interface BackendBookingItem {
+  _id?: string;
+  __v?: number;
+  createdAt?: string;
+  guestsAdult: number;
+  guestsChild: number;
+  hotel: string;
+  startDate: string;
+  nights: number;
+  roomNumber: string;
+  totalPrice: number;
+  user: string;
+}
+
+export interface BookingJson {
+  success?: boolean;
+  count?: number;
+  data: BackendBookingItem[];
+}
+
+export interface SingleBookingJson {
+  success?: boolean;
+  data: BackendBookingItem;
 }
