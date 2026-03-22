@@ -9,28 +9,40 @@ export interface BookingItem {
   userEmail?: string;
 }
 
-export interface VenueItem {
+export interface UserProfile {
   _id: string;
-  id: string;
+  name: string;
+  email: string;
+  tel: string;
+  password: string;
+  role?: string;
+  __v?: number;
+}
+
+export interface HotelItem {
+  _id: string;
+  id?: string;
   name: string;
   address: string;
   district: string;
   province: string;
   postalcode: string;
+  region: string;
   tel: string;
-  picture: string;
-  dailyrate: number;
-  __v: number;
+  description: string;
+  imgSrc?: string;
+  price: number;
+  __v?: number;
 }
 
-export interface VenueJson {
+export interface HotelJson {
   success: boolean;
   count: number;
-  pagination: object;
-  data: VenueItem[];
+  pagination?: Record<string, unknown>;
+  data: HotelItem[];
 }
 
-export interface SingleVenueJson {
+export interface SingleHotelJson {
   success: boolean;
-  data: VenueItem;
+  data: HotelItem;
 }

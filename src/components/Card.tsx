@@ -1,113 +1,61 @@
 import Link from "next/link";
-import Image from "next/image";
 
 interface CardProps {
   vid: string;
   name: string;
   address: string;
   province: string;
-  dailyrate: number;
-  picture?: string;
+  price: number;
+  imgSrc?: string;
 }
 
-export default function Card({ vid, name, address, province, dailyrate, picture }: CardProps) {
+export default function Card({
+  vid,
+  name,
+  address,
+  province,
+  price,
+  imgSrc,
+}: CardProps) {
   return (
-    <Link href={`/venue/${vid}`} className="group block">
-      <div
-        className="overflow-hidden transition-all duration-500 group-hover:shadow-2xl"
-        style={{ border: "1px solid #D4AD7A" }}
-      >
-        <div className="w-full h-52 sm:h-64 relative overflow-hidden">
-          {picture ? (
-            <Image
-              src={picture}
+    <article className="figma-card-surface border border-[rgba(171,25,46,0.08)] bg-[#fff8f3]">
+      <Link href={`/venue/${vid}`} className="block">
+        <div className="aspect-[616/275] overflow-hidden bg-[#efe3d8]">
+          {imgSrc ? (
+            <img
+              src={imgSrc}
               alt={name}
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, 33vw"
+              loading="lazy"
+              className="figma-card-image block h-full w-full object-cover"
             />
           ) : (
-            <div
-              className="w-full h-full flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #2A1005 0%, #5C2E0E 50%, #9C6240 100%)" }}
-            >
-              <span
-                className="text-xs tracking-[0.3em] uppercase opacity-40"
-                style={{ color: "#E8B84B", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Photo
-              </span>
+            <div className="flex h-full items-center justify-center font-figma-copy text-[1.8rem] text-[var(--figma-ink-soft)]">
+              Some photo
             </div>
           )}
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6"
-            style={{ background: "linear-gradient(to top, rgba(19,9,0,0.7) 0%, transparent 60%)" }}
-          >
-            <span
-              className="text-xs tracking-[0.4em] uppercase"
-              style={{ color: "#E8B84B", fontFamily: "'Cormorant SC', serif" }}
-            >
-              View Hotel
-            </span>
-          </div>
+        </div>
+      </Link>
+
+      <div className="flex items-end justify-between gap-4 px-5 py-4 sm:px-6">
+        <div className="min-w-0">
+          <h2 className="truncate font-figma-copy text-[1.9rem] text-[var(--figma-ink)] sm:text-[2rem]">
+            {name}
+          </h2>
+          <p className="font-figma-copy text-[1rem] text-[var(--figma-ink-soft)] sm:text-[1.15rem]">
+            {province} - {address}
+          </p>
+          <p className="mt-1 font-figma-copy text-[1rem] text-[var(--figma-red)] sm:text-[1.1rem]">
+            ${price.toLocaleString()} per night
+          </p>
         </div>
 
-        <div className="p-4 sm:p-6" style={{ background: "#FFFDF8" }}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h2
-                className="text-lg sm:text-xl mb-1 tracking-wide"
-                style={{
-                  fontFamily: "'Cormorant SC', serif",
-                  color: "#130900",
-                  fontWeight: 500,
-                  lineHeight: 1.2,
-                }}
-              >
-                {name}
-              </h2>
-              <p
-                className="text-xs tracking-[0.15em] uppercase"
-                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-              >
-                {province}
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <p
-                className="text-base sm:text-lg"
-                style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
-              >
-                ฿{dailyrate?.toLocaleString()}
-              </p>
-              <p
-                className="text-xs"
-                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-              >
-                / night
-              </p>
-            </div>
-          </div>
-
-          <div
-            className="mt-3 sm:mt-4 pt-3 sm:pt-4 flex items-center justify-between"
-            style={{ borderTop: "1px solid #F2E4C8" }}
-          >
-            <p
-              className="text-xs tracking-wide line-clamp-1 min-w-0"
-              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-            >
-              {address}
-            </p>
-            <span
-              className="text-xs tracking-[0.2em] uppercase group-hover:text-[#C8881E] transition-colors shrink-0 ml-2 sm:ml-3"
-              style={{ color: "#C4956A", fontFamily: "'Cormorant SC', serif" }}
-            >
-              Book →
-            </span>
-          </div>
-        </div>
+        <Link
+          href={`/venue/${vid}`}
+          className="figma-button figma-card-detail-button px-4 py-1 font-figma-copy text-[1.15rem] normal-case sm:px-5 sm:text-[1.25rem]"
+        >
+          detail
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
