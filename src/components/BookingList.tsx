@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { BookingItem } from "@/interface";
-import hotels from "@/data/hotels";
+import getHotels from "@/libs/getHotels";
 
-const hotelNames = hotels.data.map((h) => h.name);
+const hotelNames = getHotels().data.map((h) => h.name);
+// why?
 
 const STORAGE_KEY = "bun1_bookings";
 function loadBookings(): BookingItem[] {

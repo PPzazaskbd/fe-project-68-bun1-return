@@ -6,11 +6,11 @@ interface CardProps {
   name: string;
   address: string;
   province: string;
-  dailyrate: number;
-  picture?: string;
+  price: number;
+  imgSrc?: string;
 }
 
-export default function Card({ vid, name, address, province, dailyrate, picture }: CardProps) {
+export default function Card({ vid, name, address, province, price, imgSrc }: CardProps) {
   return (
     <Link href={`/venue/${vid}`} className="group block">
       <div
@@ -18,9 +18,9 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
         style={{ border: "1px solid #D4AD7A" }}
       >
         <div className="w-full h-52 sm:h-64 relative overflow-hidden">
-          {picture ? (
+          {imgSrc ? (
             <Image
-              src={picture}
+              src={imgSrc}
               alt={name}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -78,7 +78,7 @@ export default function Card({ vid, name, address, province, dailyrate, picture 
                 className="text-base sm:text-lg"
                 style={{ color: "#C8881E", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
               >
-                ฿{dailyrate?.toLocaleString()}
+                ฿{price?.toLocaleString()}
               </p>
               <p
                 className="text-xs"

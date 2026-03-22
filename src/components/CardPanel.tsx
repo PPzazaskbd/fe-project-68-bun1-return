@@ -1,20 +1,20 @@
 import Card from "./Card";
-import { VenueItem } from "@/interface";
+import { HotelItem, HotelJson } from "@/interface";
 
-interface VenueJson {
+interface HotelJson {
   success: boolean;
   count: number;
-  data: VenueItem[];
+  data: HotelItem[];
 }
 
 interface CardPanelProps {
-  venuesJson: VenueJson;
+  hotelsJson: HotelJson;
 }
 
-export default function CardPanel({ venuesJson }: CardPanelProps) {
-  const venues = venuesJson.data;
+export default function CardPanel({ hotelsJson }: CardPanelProps) {
+  const hotels = hotelsJson.data;
 
-  if (!venues || venues.length === 0) {
+  if (!hotels || hotels.length === 0) {
     return (
       <div className="text-center py-20">
         <p
@@ -29,15 +29,15 @@ export default function CardPanel({ venuesJson }: CardPanelProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
-      {venues.map((venue: VenueItem) => (
+      {hotels.map((hotel: HotelItem) => (
         <Card
-          key={venue.id || venue._id}
-          vid={venue.id || venue._id}
-          name={venue.name}
-          address={venue.address}
-          province={venue.province}
-          dailyrate={venue.dailyrate}
-          picture={venue.picture}
+          key={hotel.id || hotel._id}
+          vid={hotel.id || hotel._id}
+          name={hotel.name}
+          address={hotel.address}
+          province={hotel.province}
+          price={hotel.price}
+          imgSrc={hotel.imgSrc}
         />
       ))}
     </div>

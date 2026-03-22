@@ -1,8 +1,8 @@
 import CardPanel from "@/components/CardPanel";
-import getVenues from "@/libs/getVenues";
+import getHotels from "@/libs/getHotels";
 
 export default async function HotelsPage() {
-  const venuesJson = await getVenues();
+  const hotelsJson = await getHotels();
 
   return (
     <main className="min-h-screen" style={{ background: "#FDF6EC" }}>
@@ -37,7 +37,7 @@ export default async function HotelsPage() {
       </div>
 
       <div className="px-4 sm:px-8 md:px-16 py-10 sm:py-16">
-        <CardPanel venuesJson={venuesJson} />
+        <CardPanel hotelsJson={hotelsJson} />
       </div>
     </main>
   );

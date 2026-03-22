@@ -9,6 +9,8 @@ export default async function getVenues() {
 if (!response.ok) {
     throw new Error("Failed to fetch venues");
   }
+  
+  const data = await response.json();
 
-  return await response.json() as Promise<HotelJson>;
+  return data as HotelJson;
 }
