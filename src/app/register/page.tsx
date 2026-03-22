@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,183 +11,113 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError("");
-    setLoading(true);
 
     try {
-      const res = await fetch("/api/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, tel, email, password }),
       });
-      const data = await res.json();
+      const data = await response.json();
 
-      if (res.ok && data.success !== false) {
-        router.push("/login?registered=1");
-      } else {
-        setError(data.message || data.msg || "Registration failed. Please try again.");
+      if (!response.ok || data.success === false) {
+        setError(data.message || data.msg || "Registration failed.");
+        return;
       }
+
+      startTransition(() => {
+        router.push("/login?registered=1");
+      });
     } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
+      setError("Registration service unavailable.");
     }
   };
 
-  const inputClass =
-    "border-b border-[#C4973A] bg-transparent py-2 text-[#1A1208] focus:outline-none focus:border-[#1A1208] transition-colors text-base w-full";
-  const labelClass =
-    "text-xs tracking-[0.2em] uppercase";
-
   return (
-    <main
-      className="min-h-screen flex items-center justify-center px-6 py-16"
-      style={{ background: "linear-gradient(160deg, #FAF7F2 0%, #F0E8DC 100%)" }}
-    >
-      <div className="w-full max-w-md">
-        <div className="flex items-center gap-4 mb-8 justify-center">
-          <div className="h-px flex-1 bg-[#C4973A] opacity-40" />
-          <span
-            className="text-[#C4973A] text-sm tracking-[0.3em] uppercase"
-            style={{ fontFamily: "'Cormorant SC', serif" }}
+    <main className="figma-page flex items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
+      <section className="figma-panel w-full max-w-[51.6rem] px-8 py-12 sm:px-11 sm:py-14">
+        <h1 className="font-figma-nav text-center text-[2rem] tracking-[0.08em] text-[var(--figma-red)]">
+          REGISTER
+        </h1>
+
+        <form onSubmit={handleRegister} className="mx-auto mt-10 flex max-w-[25rem] flex-col gap-6">
+          <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
+            <span className="sr-only">Name</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="figma-input"
+              placeholder="Name"
+              required
+            />
+          </label>
+
+          <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
+            <span className="sr-only">Phone Number</span>
+            <input
+              type="tel"
+              value={tel}
+              onChange={(event) => setTel(event.target.value.replace(/\D/g, ""))}
+              className="figma-input"
+              placeholder="Phone Number"
+              required
+            />
+          </label>
+
+          <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
+            <span className="sr-only">Email Address</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="figma-input"
+              placeholder="Email Address"
+              required
+            />
+          </label>
+
+          <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
+            <span className="sr-only">Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="figma-input"
+              placeholder="Password"
+              required
+              minLength={6}
+            />
+          </label>
+
+          {error ? (
+            <p className="figma-feedback figma-feedback-error font-figma-copy text-center text-[1.2rem]">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={isPending}
+            aria-busy={isPending}
+            className="figma-button figma-button-prominent mt-4 h-[2rem] w-full font-figma-nav text-[1.9rem] leading-none"
           >
-            Create Account
-          </span>
-          <div className="h-px flex-1 bg-[#C4973A] opacity-40" />
-        </div>
+            {isPending ? "REGISTERING" : "REGISTER"}
+          </button>
+        </form>
 
-        <div
-          className="bg-white shadow-xl p-8 sm:p-10"
-          style={{ border: "1px solid #E8D5B7" }}
-        >
-          <h1
-            className="text-4xl text-center mb-2 tracking-wide"
-            style={{
-              fontFamily: "'Cormorant SC', serif",
-              color: "#1A1208",
-              fontWeight: 500,
-            }}
-          >
-            Register
-          </h1>
-          <p
-            className="text-center text-sm mb-8 tracking-widest uppercase"
-            style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-          >
-            Bun1 Hotel Collection
-          </p>
-
-          <form onSubmit={handleRegister} className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-                placeholder="Your full name"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Telephone Number
-              </label>
-              <input
-                type="tel"
-                value={tel}
-                onChange={(e) => setTel(e.target.value)}
-                required
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-                placeholder="e.g. 0812345678"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-                placeholder="Minimum 6 characters"
-              />
-            </div>
-
-            {error && (
-              <p
-                className="text-sm text-center"
-                style={{ color: "#8B3A3A", fontFamily: "'Cormorant SC', serif" }}
-              >
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 py-3 text-white tracking-[0.3em] uppercase text-sm transition-opacity disabled:opacity-60"
-              style={{
-                background: "#1A1208",
-                fontFamily: "'Cormorant SC', serif",
-              }}
-            >
-              {loading ? "Creating Account..." : "Create Account"}
-            </button>
-          </form>
-
-          <p
-            className="text-center text-sm mt-6"
-            style={{ color: "#8B6E52", fontFamily: "'Cormorant SC', serif" }}
-          >
-            Already have an account?{" "}
-            <Link href="/login" className="underline" style={{ color: "#C4973A" }}>
-              Sign In
-            </Link>
-          </p>
-        </div>
-      </div>
+        <p className="mt-10 text-center font-figma-copy text-[1.5rem] text-[var(--figma-ink)]">
+          Have an account?{" "}
+          <Link href="/login" className="text-[var(--figma-red)]">
+            Log in
+          </Link>
+        </p>
+      </section>
     </main>
   );
 }

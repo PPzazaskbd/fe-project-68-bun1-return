@@ -1,31 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { VenueJson } from "../interface";
+import { HotelJson } from "@/interface";
 import Card from "./Card";
 
 export default function VenueCatalog() {
-  const [venues, setVenues] = useState<VenueJson | null>(null);
+  const [venues, setVenues] = useState<HotelJson | null>(null);
 
   useEffect(() => {
     fetch("/api/venues")
-      .then(res => res.json())
-      .then(data => setVenues(data))
-      .catch(err => console.error(err));
+      .then((response) => response.json())
+      .then((data) => setVenues(data))
+      .catch((error) => console.error(error));
   }, []);
 
-  if (!venues) return <p>Loading...</p>;
+  if (!venues) {
+    return (
+      <p className="font-figma-copy text-[1.4rem] text-[var(--figma-ink-soft)]">
+        Loading...
+      </p>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-3 gap-8 mt-6 justify-items-center">
+    <div className="grid gap-8 lg:grid-cols-2">
       {venues.data.map((item) => (
         <Card
-          key={item.id.toString()}
-          vid={item.id.toString()}
+          key={item.id || item._id}
+          vid={item.id || item._id}
           name={item.name}
-          address={item.address ?? ""}
-          province={item.province ?? ""}
-          dailyrate={item.dailyrate ?? 0}
+          address={item.address}
+          province={item.province}
+          price={item.price}
+          imgSrc={item.imgSrc}
         />
       ))}
     </div>

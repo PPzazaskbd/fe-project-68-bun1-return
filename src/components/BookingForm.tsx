@@ -1,382 +1,266 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BookingItem } from "@/interface";
 import { useSearchParams } from "next/navigation";
-import hotels from "@/data/hotels";
+import { BookingItem, HotelItem } from "@/interface";
+import {
+  calculateNights,
+  getTodayIsoDate,
+  loadBookings,
+  saveBookings,
+} from "@/libs/bookingStorage";
 
-const STORAGE_KEY = "bun1_bookings";
-function loadBookings(): BookingItem[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+interface BookingFormProps {
+  hotels: HotelItem[];
 }
-function saveBookings(items: BookingItem[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
+
+function addDays(base: string, days: number) {
+  const date = new Date(base);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
-const hotelNames = hotels.data.map((h) => h.name);
-
-export default function BookingForm() {
+export default function BookingForm({ hotels }: BookingFormProps) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const preselectedHotel = searchParams.get("venue") || "";
+  const today = getTodayIsoDate();
+  const defaultCheckOut = addDays(today, 1);
+  const initialHotel = hotels[0]?.name ?? "";
 
   const [nameLastname, setNameLastname] = useState("");
   const [tel, setTel] = useState("");
-  const [hotel, setHotel] = useState(hotelNames[0] || "");
+  const [hotel, setHotel] = useState(initialHotel);
   const [guests, setGuests] = useState(1);
+  const [checkIn, setCheckIn] = useState(today);
+  const [checkOut, setCheckOut] = useState(defaultCheckOut);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Use refs for dates — Safari sometimes skips React onChange for date inputs
-  const checkInRef = useRef<HTMLInputElement>(null);
-  const checkOutRef = useRef<HTMLInputElement>(null);
-  const [checkInDisplay, setCheckInDisplay] = useState("");
-  const [checkOutDisplay, setCheckOutDisplay] = useState("");
-  // Safari shows today on empty date inputs — switch type text↔date on focus/blur
-  const [checkInType, setCheckInType] = useState("text");
-  const [checkOutType, setCheckOutType] = useState("text");
+  useEffect(() => {
+    if (session?.user?.name) {
+      setNameLastname((current) => current || session.user.name);
+    }
+  }, [session?.user?.name]);
 
   useEffect(() => {
-    if (preselectedHotel) {
-      const decoded = decodeURIComponent(preselectedHotel);
-      const matched = hotelNames.find(
-        (n) => n.toLowerCase() === decoded.toLowerCase()
+    const venue = searchParams.get("venue");
+    const from = searchParams.get("checkIn");
+    const to = searchParams.get("checkOut");
+
+    if (venue) {
+      const decodedVenue = decodeURIComponent(venue);
+      const matchedHotel = hotels.find(
+        (item) => item.name.toLowerCase() === decodedVenue.toLowerCase(),
       );
-      setHotel(matched || decoded);
+      setHotel(matchedHotel?.name ?? decodedVenue);
     }
-  }, [preselectedHotel]);
 
-  // Local today in YYYY-MM-DD (use locale date to avoid UTC-off-by-one in Safari/TH timezone)
-  const today = (() => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  })();
+    if (from) setCheckIn(from);
+    if (to) setCheckOut(to);
+  }, [hotels, searchParams]);
 
-  const calcNights = () => {
-    const ci = checkInRef.current?.value || checkInDisplay;
-    const co = checkOutRef.current?.value || checkOutDisplay;
-    if (!ci || !co) return 0;
-    const diff = new Date(co).getTime() - new Date(ci).getTime();
-    return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
-  };
+  const selectedHotel = useMemo(
+    () => hotels.find((item) => item.name === hotel),
+    [hotel, hotels],
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const nights = Math.max(1, calculateNights(checkIn, checkOut));
+  const total = (selectedHotel?.price ?? 0) * nights;
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError("");
 
-    // Read dates from refs (bypasses Safari onChange issue) then fall back to state
-    const checkIn = checkInRef.current?.value || checkInDisplay;
-    const checkOut = checkOutRef.current?.value || checkOutDisplay;
-
     if (!nameLastname.trim()) {
-      setError("Please enter your guest name.");
+      setError("Please enter the guest name.");
       return;
     }
-    if (/\d/.test(nameLastname)) {
-      setError("Guest name must contain letters only, no numbers.");
-      return;
-    }
+
     if (!tel.trim()) {
-      setError("Please enter your contact number.");
+      setError("Please enter a contact number.");
       return;
     }
-    if (!/^\d+$/.test(tel.trim())) {
+
+    if (!/^\d+$/.test(tel)) {
       setError("Contact number must contain digits only.");
       return;
     }
+
     if (!hotel) {
-      setError("Please select a hotel.");
-      return;
-    }
-    if (!checkIn) {
-      setError("Please select a check-in date.");
-      return;
-    }
-    if (!checkOut) {
-      setError("Please select a check-out date.");
-      return;
-    }
-    if (checkIn < today) {
-      setError("Check-in date cannot be in the past.");
-      return;
-    }
-    if (checkOut <= checkIn) {
-      setError("Check-out date must be after check-in date.");
+      setError("Please choose a hotel.");
       return;
     }
 
-    const nights = Math.round(
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
-    );
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+      setError("Please choose a valid stay period.");
+      return;
+    }
+
     if (nights > 3) {
       setError("Bookings are limited to a maximum of 3 nights.");
       return;
     }
 
-    const userEmail = session?.user?.email || "guest";
-    const newBooking: BookingItem = { id: Date.now().toString(), nameLastname, tel, hotel, checkIn, checkOut, guests, userEmail };
-    const existing = loadBookings();
-    saveBookings([...existing, newBooking]);
+    const newBooking: BookingItem = {
+      id: Date.now().toString(),
+      nameLastname: nameLastname.trim(),
+      tel: tel.trim(),
+      hotel,
+      checkIn,
+      checkOut,
+      guests,
+      userEmail: session?.user?.email || "",
+    };
 
-    setNameLastname("");
-    setTel("");
-    setHotel(hotelNames[0] || "");
-    setCheckInDisplay("");
-    setCheckOutDisplay("");
-    setCheckInType("text");
-    setCheckOutType("text");
-    if (checkInRef.current) checkInRef.current.value = "";
-    if (checkOutRef.current) checkOutRef.current.value = "";
-    setGuests(1);
+    const existingBookings = loadBookings();
+    saveBookings([...existingBookings, newBooking]);
+
     setSuccess(true);
+    setError("");
+    setGuests(1);
+    setCheckIn(today);
+    setCheckOut(defaultCheckOut);
+    setHotel(initialHotel);
     setTimeout(() => setSuccess(false), 4000);
   };
 
-  const nights = calcNights();
-
-  const inputClass =
-    "border-b border-[#C8881E] bg-transparent py-2 text-[#130900] focus:outline-none focus:border-[#130900] transition-colors text-base w-full";
-  const labelClass = "text-xs tracking-[0.2em] uppercase";
-
   return (
-    <div className="w-full max-w-lg">
-      {success && (
-        <div
-          className="mb-6 sm:mb-8 py-4 px-5 sm:px-6 text-center"
-          style={{ background: "#F2E4C8", border: "1px solid #C8881E" }}
-        >
-          <p
-            className="text-sm tracking-[0.2em] uppercase"
-            style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-          >
-            Booking Confirmed
+    <div className="w-full max-w-[62rem]">
+      {success ? (
+        <div className="figma-feedback figma-feedback-success mb-6 px-6 py-4">
+          <p className="font-figma-nav text-[1.35rem] tracking-[0.08em]">
+            BOOKING CONFIRMED
           </p>
-          <p
-            className="text-xs mt-1"
-            style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-          >
-            We look forward to welcoming you.
+          <p className="mt-1 font-figma-copy text-[1.25rem]">
+            Your reservation was stored successfully.
           </p>
         </div>
-      )}
+      ) : null}
 
-      <div
-        className="bg-white p-6 sm:p-10 shadow-lg"
-        style={{ border: "1px solid #D4AD7A" }}
-      >
-        <div className="flex items-center gap-3 mb-8">
-          <div className="h-px flex-1 bg-[#C8881E] opacity-30" />
-          <span
-            className="text-xs tracking-[0.3em] uppercase"
-            style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
+      <div className="grid gap-8 border border-[rgba(171,25,46,0.08)] bg-[rgba(255,245,244,0.42)] p-6 sm:p-10 xl:grid-cols-[1.15fr_0.75fr]">
+        <form onSubmit={handleSubmit} className="grid gap-6">
+          <h1 className="font-figma-nav text-[2rem] tracking-[0.08em] text-[var(--figma-red)]">
+            COMPLETE BOOKING
+          </h1>
+
+          <input
+            type="text"
+            value={nameLastname}
+            onChange={(event) => setNameLastname(event.target.value.replace(/\d/g, ""))}
+            className="figma-input"
+            placeholder="Guest Name"
+            required
+          />
+
+          <input
+            type="tel"
+            value={tel}
+            onChange={(event) => setTel(event.target.value.replace(/\D/g, ""))}
+            className="figma-input"
+            placeholder="Phone Number"
+            required
+          />
+
+          <select
+            value={hotel}
+            onChange={(event) => setHotel(event.target.value)}
+            className="figma-input"
+            required
           >
-            Hotel Reservation
-          </span>
-          <div className="h-px flex-1 bg-[#C8881E] opacity-30" />
-        </div>
+            {hotels.map((item) => (
+              <option key={item._id} value={item.name}>
+                {item.name}
+              </option>
+            ))}
+          </select>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-7">
-          {/* Name */}
-          <div className="flex flex-col gap-1">
-            <label
-              className={labelClass}
-              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-            >
-              Guest Name
-            </label>
+          <div className="grid gap-5 sm:grid-cols-2">
             <input
-              type="text"
-              value={nameLastname}
-              onChange={(e) => {
-                // Strip digits as user types
-                setNameLastname(e.target.value.replace(/\d/g, ""));
+              type="date"
+              value={checkIn}
+              min={today}
+              onChange={(event) => {
+                const nextCheckIn = event.target.value;
+                setCheckIn(nextCheckIn);
+                if (nextCheckIn >= checkOut) {
+                  setCheckOut(addDays(nextCheckIn, 1));
+                }
               }}
-              className={inputClass}
-              style={{ fontFamily: "'Cormorant SC', serif" }}
-              placeholder="Full name (letters only)"
+              className="figma-input"
+              required
+            />
+
+            <input
+              type="date"
+              value={checkOut}
+              min={addDays(checkIn, 1)}
+              onChange={(event) => setCheckOut(event.target.value)}
+              className="figma-input"
+              required
             />
           </div>
 
-          {/* Tel */}
-          <div className="flex flex-col gap-1">
-            <label
-              className={labelClass}
-              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setGuests((current) => Math.max(1, current - 1))}
+              className="figma-button-secondary flex h-10 w-10 items-center justify-center text-[1.5rem]"
             >
-              Contact Number
-            </label>
-            <input
-              type="tel"
-              value={tel}
-              onChange={(e) => {
-                // Strip non-digits as user types
-                setTel(e.target.value.replace(/\D/g, ""));
-              }}
-              className={inputClass}
-              style={{ fontFamily: "'Cormorant SC', serif" }}
-              placeholder="Numbers only"
-            />
+              -
+            </button>
+            <span className="font-figma-copy text-[1.5rem] text-[var(--figma-ink)]">
+              {guests} guest{guests > 1 ? "s" : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => setGuests((current) => Math.min(10, current + 1))}
+              className="figma-button-secondary flex h-10 w-10 items-center justify-center text-[1.5rem]"
+            >
+              +
+            </button>
           </div>
 
-          {/* Hotel dropdown */}
-          <div className="flex flex-col gap-1">
-            <label
-              className={labelClass}
-              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-            >
-              Hotel
-            </label>
-            <select
-              value={hotel}
-              onChange={(e) => setHotel(e.target.value)}
-              className={inputClass}
-              style={{ fontFamily: "'Cormorant SC', serif", cursor: "pointer" }}
-            >
-              {hotelNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Check-in / Check-out — uncontrolled with ref to bypass Safari onChange issue */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Check-In
-              </label>
-              <input
-                type={checkInType}
-                ref={checkInRef}
-                value={checkInType === "text" ? (checkInDisplay ? new Date(checkInDisplay).toLocaleDateString() : "") : checkInDisplay}
-                placeholder="Select date"
-                onFocus={() => setCheckInType("date")}
-                onChange={(e) => {
-                  setCheckInDisplay(e.target.value);
-                  const co = checkOutRef.current?.value || checkOutDisplay;
-                  if (co && co <= e.target.value) {
-                    setCheckOutDisplay("");
-                    if (checkOutRef.current) checkOutRef.current.value = "";
-                  }
-                }}
-                onBlur={(e) => {
-                  const val = e.target.value || checkInRef.current?.value || "";
-                  setCheckInDisplay(val);
-                  if (!val) setCheckInType("text");
-                }}
-                readOnly={checkInType === "text"}
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label
-                className={labelClass}
-                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Check-Out
-              </label>
-              <input
-                type={checkOutType}
-                ref={checkOutRef}
-                value={checkOutType === "text" ? (checkOutDisplay ? new Date(checkOutDisplay).toLocaleDateString() : "") : checkOutDisplay}
-                placeholder="Select date"
-                onFocus={() => setCheckOutType("date")}
-                onChange={(e) => setCheckOutDisplay(e.target.value)}
-                onBlur={(e) => {
-                  const val = e.target.value || checkOutRef.current?.value || "";
-                  setCheckOutDisplay(val);
-                  if (!val) setCheckOutType("text");
-                }}
-                className={inputClass}
-                style={{ fontFamily: "'Cormorant SC', serif" }}
-              />
-            </div>
-          </div>
-
-          {/* Nights summary */}
-          {nights > 0 && (
-            <div
-              className="py-3 px-4 flex items-center justify-between"
-              style={{ background: "#F2E4C8" }}
-            >
-              <span
-                className="text-xs tracking-[0.2em] uppercase"
-                style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-              >
-                Duration
-              </span>
-              <span
-                className="text-sm"
-                style={{ color: "#130900", fontFamily: "'Cormorant SC', serif", fontWeight: 500 }}
-              >
-                {nights} {nights === 1 ? "Night" : "Nights"}
-              </span>
-            </div>
-          )}
-
-          {/* Guests */}
-          <div className="flex flex-col gap-1">
-            <label
-              className={labelClass}
-              style={{ color: "#9C6240", fontFamily: "'Cormorant SC', serif" }}
-            >
-              Guests
-            </label>
-            <div className="flex items-center gap-4 border-b border-[#C8881E] py-2">
-              <button
-                type="button"
-                onClick={() => setGuests((g) => Math.max(1, g - 1))}
-                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
-              >
-                −
-              </button>
-              <span
-                className="flex-1 text-center text-base"
-                style={{ color: "#130900", fontFamily: "'Cormorant SC', serif" }}
-              >
-                {guests} {guests === 1 ? "Guest" : "Guests"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setGuests((g) => Math.min(10, g + 1))}
-                className="w-7 h-7 flex items-center justify-center transition-colors hover:text-[#E8B84B]"
-                style={{ color: "#9C6240", border: "1px solid #D4AD7A", fontFamily: "'Cormorant SC', serif" }}
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <p
-              className="text-sm"
-              style={{ color: "#8B3A3A", fontFamily: "'Cormorant SC', serif" }}
-            >
+          {error ? (
+            <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.2rem]">
               {error}
             </p>
-          )}
+          ) : null}
 
           <button
             type="submit"
-            className="mt-2 py-4 text-white tracking-[0.4em] uppercase text-sm transition-opacity hover:opacity-80"
-            style={{
-              background: "#130900",
-              fontFamily: "'Cormorant SC', serif",
-            }}
+            className="figma-button figma-button-prominent mt-3 h-14 font-figma-nav text-[1.8rem]"
           >
-            Confirm Booking
+            RESERVE
           </button>
         </form>
+
+        <aside className="space-y-5 border border-[rgba(171,25,46,0.08)] bg-[#fff8f3] p-6">
+          <h2 className="font-figma-nav text-[1.7rem] tracking-[0.08em] text-[var(--figma-red)]">
+            STAY SUMMARY
+          </h2>
+
+          <div className="space-y-3 font-figma-copy text-[1.35rem] text-[var(--figma-ink)]">
+            <p>{selectedHotel?.name ?? "Selected hotel"}</p>
+            <p>{selectedHotel?.address ?? "Address unavailable"}</p>
+            <p>{selectedHotel?.tel ?? "Phone unavailable"}</p>
+          </div>
+
+          <div className="space-y-3 border-t border-[rgba(171,25,46,0.12)] pt-4 font-figma-copy text-[1.35rem] text-[var(--figma-ink)]">
+            <div className="flex items-center justify-between gap-4">
+              <span>Price :</span>
+              <span>${selectedHotel?.price?.toLocaleString() ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span>night :</span>
+              <span>{nights}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span>Total :</span>
+              <span>${total.toLocaleString()}</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
