@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { HotelJson } from "@/interface";
 import Card from "./Card";
+import HotelCardSkeleton from "./HotelCardSkeleton";
 
 export default function VenueCatalogClient() {
   const [venues, setVenues] = useState<HotelJson | null>(null);
@@ -16,9 +17,11 @@ export default function VenueCatalogClient() {
 
   if (!venues) {
     return (
-      <p className="font-figma-copy text-[1.4rem] text-[var(--figma-ink-soft)]">
-        Loading...
-      </p>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <HotelCardSkeleton key={index} />
+        ))}
+      </div>
     );
   }
 

@@ -50,6 +50,7 @@ export default function BookingList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
   const [editError, setEditError] = useState("");
+  const [savedBookingId, setSavedBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     const allBookings = loadBookings();
@@ -59,6 +60,16 @@ export default function BookingList({
 
     setBookings(filteredBookings);
   }, [effectiveAdmin, userEmail]);
+
+  useEffect(() => {
+    if (!savedBookingId) return;
+
+    const timeout = window.setTimeout(() => {
+      setSavedBookingId((current) => (current === savedBookingId ? null : current));
+    }, 2600);
+
+    return () => window.clearTimeout(timeout);
+  }, [savedBookingId]);
 
   const hotelMap = useMemo(
     () => new Map(hotels.map((hotel) => [hotel.name, hotel])),
@@ -78,6 +89,7 @@ export default function BookingList({
     saveBookings(updated);
 
     setBookings((current) => current.filter((item) => item.id !== bookingId));
+    setSavedBookingId((current) => (current === bookingId ? null : current));
   };
 
   const handleStartEdit = (item: BookingItem) => {
@@ -91,6 +103,7 @@ export default function BookingList({
       guests: item.guests,
     });
     setEditError("");
+    setSavedBookingId(null);
   };
 
   const handleSaveEdit = (item: BookingItem) => {
@@ -134,6 +147,7 @@ export default function BookingList({
     setEditingId(null);
     setEditState(null);
     setEditError("");
+    setSavedBookingId(item.id);
   };
 
   if (bookings.length === 0) {
@@ -152,12 +166,32 @@ export default function BookingList({
           const nights = Math.max(1, calculateNights(item.checkIn, item.checkOut));
           const total = (hotel?.price ?? 0) * nights;
           const isEditing = editingId === item.id;
+          const isRecentlySaved = savedBookingId === item.id;
 
           return (
             <article
               key={item.id}
-              className="border border-[rgba(171,25,46,0.08)] bg-[#fff8f3] p-4 sm:p-5"
+              className="border border-[rgba(171,25,46,0.08)] bg-[#fff8f3] p-4 transition-colors sm:p-5"
+              style={
+                isRecentlySaved
+                  ? {
+                      borderColor: "rgba(66, 113, 68, 0.25)",
+                      background: "rgba(245, 250, 245, 0.96)",
+                    }
+                  : undefined
+              }
             >
+              {isRecentlySaved ? (
+                <div className="figma-feedback figma-feedback-success mb-4">
+                  <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
+                    BOOKING UPDATED
+                  </p>
+                  <p className="mt-1 font-figma-copy text-[1.05rem]">
+                    Your changes were saved successfully.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="grid gap-5 lg:grid-cols-[160px_1fr_auto_auto] lg:items-start">
                 <div className="relative aspect-square overflow-hidden bg-[#edf0f2]">
                   {hotel?.imgSrc ? (
