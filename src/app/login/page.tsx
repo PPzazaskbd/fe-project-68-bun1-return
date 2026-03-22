@@ -1,38 +1,46 @@
 "use client";
 
+import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { Suspense, useState, useTransition } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const justRegistered = searchParams.get("registered") === "1";
+  const requestedCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
+  const registerHref = buildAuthHref("/register", requestedCallbackUrl);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
-    const response = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const response = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (response?.error) {
-      setError("Invalid email or password.");
-      return;
-    }
+      if (response?.error) {
+        setError("Invalid email or password.");
+        setIsSubmitting(false);
+        return;
+      }
 
-    startTransition(() => {
-      router.push("/");
+      router.push(callbackUrl);
       router.refresh();
-    });
+    } catch {
+      setError("Login service unavailable.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -67,12 +75,6 @@ function LoginForm() {
             />
           </label>
 
-          {justRegistered ? (
-            <p className="figma-feedback figma-feedback-success font-figma-copy text-center text-[1.2rem]">
-              Account created. Please log in.
-            </p>
-          ) : null}
-
           {error ? (
             <p className="figma-feedback figma-feedback-error font-figma-copy text-center text-[1.2rem]">
               {error}
@@ -81,17 +83,17 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={isPending}
-            aria-busy={isPending}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
             className="figma-button figma-button-prominent h-[2rem] w-full font-figma-nav text-[1.9rem] leading-none"
           >
-            {isPending ? "LOGGING IN" : "LOG IN"}
+            {isSubmitting ? "LOGGING IN" : "LOG IN"}
           </button>
         </form>
 
         <p className="mt-10 text-center font-figma-copy text-[1.5rem] text-[var(--figma-ink)]">
           New here?{" "}
-          <Link href="/register" className="text-[var(--figma-red)]">
+          <Link href={registerHref} className="text-[var(--figma-red)]">
             Register.
           </Link>
         </p>

@@ -1,23 +1,29 @@
-import { Suspense } from "react";
-import BookingForm from "@/components/BookingForm";
-import getHotels from "@/libs/getHotels";
+import { redirect } from "next/navigation";
+import { getTodayIsoDate } from "@/libs/bookingStorage";
+import { buildDateRangeHref, normalizeDateRange } from "@/libs/dateRangeParams";
 
-export default async function BookingPage() {
-  const hotels = await getHotels();
+interface BookingPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-  return (
-    <main className="figma-page py-10 sm:py-12">
-      <div className="figma-shell">
-        <Suspense
-          fallback={
-            <div className="py-12 text-center font-figma-copy text-[1.5rem] text-[var(--figma-ink-soft)]">
-              Loading booking form...
-            </div>
-          }
-        >
-          <BookingForm hotels={hotels.data} />
-        </Suspense>
-      </div>
-    </main>
+function getFirstParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function BookingPage({ searchParams }: BookingPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const hotelId = getFirstParamValue(resolvedSearchParams.hotelId);
+  const redirectRange = normalizeDateRange(
+    getFirstParamValue(resolvedSearchParams.checkIn),
+    getFirstParamValue(resolvedSearchParams.checkOut),
+    getTodayIsoDate(),
+    getFirstParamValue(resolvedSearchParams.guestsAdult),
+    getFirstParamValue(resolvedSearchParams.guestsChild),
+  );
+
+  redirect(
+    hotelId
+      ? buildDateRangeHref(`/venue/${encodeURIComponent(hotelId)}`, redirectRange)
+      : buildDateRangeHref("/venue", redirectRange),
   );
 }

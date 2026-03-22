@@ -8,7 +8,7 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions).catch(() => null);
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?callbackUrl=%2Fadmin");
   }
 
   if (session.user.role !== "admin" && session.user.email !== "admin@example.com") {

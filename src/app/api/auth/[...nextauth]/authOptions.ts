@@ -14,22 +14,23 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // Hardcoded admin account
-        if (
-          credentials.email === "admin@example.com" &&
-          credentials.password === "12345678"
-        ) {
-          return { id: "admin", name: "admin", email: "admin@example.com", role: "admin", token: "admin-token" } as any;
-        }
-
         const user = await userLogIn(credentials.email, credentials.password);
 
         if (user && user.token) {
+          const resolvedEmail =
+            user.email ||
+            user.data?.email ||
+            credentials.email;
+          const resolvedRole =
+            user.role ||
+            user.data?.role ||
+            (resolvedEmail === "admin@example.com" ? "admin" : "user");
+
           return {
             id: user._id || user.data?._id,
             name: user.name || user.data?.name,
-            email: user.email || user.data?.email,
-            role: user.role || user.data?.role,
+            email: resolvedEmail,
+            role: resolvedRole,
             token: user.token,
           };
         }

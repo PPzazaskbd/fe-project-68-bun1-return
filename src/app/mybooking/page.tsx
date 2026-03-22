@@ -8,10 +8,10 @@ export default async function MyBookingsPage() {
   const session = await getServerSession(authOptions).catch(() => null);
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?callbackUrl=%2Fmybooking");
   }
 
-  const hotels = await getHotels();
+  const hotels = await getHotels({ noStore: true });
 
   return (
     <main className="figma-page py-10 sm:py-12">

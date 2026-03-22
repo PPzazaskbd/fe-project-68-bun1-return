@@ -3,6 +3,8 @@ import { getTodayIsoDate } from "./bookingStorage";
 export interface DateRangeValue {
   checkIn: string;
   checkOut: string;
+  guestsAdult: number;
+  guestsChild: number;
 }
 
 interface SearchParamsLike {
@@ -44,10 +46,27 @@ export function isValidIsoDate(value: string | null | undefined): value is strin
   );
 }
 
+function normalizeGuestCount(
+  value: string | number | null | undefined,
+  fallbackValue: number,
+  minimum: number,
+) {
+  const parsedValue =
+    typeof value === "number"
+      ? value
+      : Number.parseInt(value ?? "", 10);
+
+  return Number.isFinite(parsedValue) && parsedValue >= minimum
+    ? parsedValue
+    : fallbackValue;
+}
+
 export function normalizeDateRange(
   checkIn: string | null | undefined,
   checkOut: string | null | undefined,
   fallbackCheckIn = getTodayIsoDate(),
+  guestsAdult?: string | number | null,
+  guestsChild?: string | number | null,
 ): DateRangeValue {
   const normalizedCheckIn = isValidIsoDate(checkIn) ? checkIn : fallbackCheckIn;
   const minimumCheckOut = addDaysToIsoDate(normalizedCheckIn, 1);
@@ -59,6 +78,8 @@ export function normalizeDateRange(
   return {
     checkIn: normalizedCheckIn,
     checkOut: normalizedCheckOut,
+    guestsAdult: normalizeGuestCount(guestsAdult, 1, 1),
+    guestsChild: normalizeGuestCount(guestsChild, 0, 0),
   };
 }
 
@@ -70,6 +91,8 @@ export function getDateRangeFromSearchParams(
     searchParams.get("checkIn"),
     searchParams.get("checkOut"),
     fallbackCheckIn,
+    searchParams.get("guestsAdult"),
+    searchParams.get("guestsChild"),
   );
 }
 
@@ -80,6 +103,8 @@ export function createDateRangeSearchParams(
   const nextParams = new URLSearchParams(searchParams.toString());
   nextParams.set("checkIn", range.checkIn);
   nextParams.set("checkOut", range.checkOut);
+  nextParams.set("guestsAdult", String(range.guestsAdult));
+  nextParams.set("guestsChild", String(range.guestsChild));
   return nextParams;
 }
 
@@ -87,5 +112,7 @@ export function buildDateRangeHref(pathname: string, range: DateRangeValue) {
   const nextParams = new URLSearchParams();
   nextParams.set("checkIn", range.checkIn);
   nextParams.set("checkOut", range.checkOut);
+  nextParams.set("guestsAdult", String(range.guestsAdult));
+  nextParams.set("guestsChild", String(range.guestsChild));
   return `${pathname}?${nextParams.toString()}`;
 }
