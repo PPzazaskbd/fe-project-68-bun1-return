@@ -16,14 +16,16 @@ export interface BookingItem {
 }
 
 export interface UserProfile {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   email: string;
-  tel: string;
-  password: string;
+  telephone?: string;
+  password?: string;
   role?: string;
   defaultGuestsAdult?: number;
   defaultGuestsChild?: number;
+  createdAt?: string;
   __v?: number;
 }
 
