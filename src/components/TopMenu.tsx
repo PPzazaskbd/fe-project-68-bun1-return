@@ -6,7 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 
-type NavKey = "hotels" | "bookings" | "auth";
+type NavKey = "hotels" | "bookings" | "profile" | "auth";
 
 function UserIcon() {
   return (
@@ -38,14 +38,20 @@ export default function TopMenu() {
   const bookingsLinkHref = session
     ? bookingsHref
     : `/login?callbackUrl=${encodeURIComponent(bookingsHref)}`;
+  const profileHref = session
+    ? "/profile"
+    : `/login?callbackUrl=${encodeURIComponent("/profile")}`;
   const authHref = session ? "/" : "/login";
   const isHotelsActive = pathname.startsWith("/venue");
   const isBookingsActive = pathname === "/mybooking" || pathname === "/admin";
+  const isProfileActive = pathname === "/profile";
   const isAuthActive = !session && (pathname === "/login" || pathname === "/register");
   const activeKey: NavKey | null = isHotelsActive
     ? "hotels"
     : isBookingsActive
       ? "bookings"
+      : isProfileActive
+        ? "profile"
       : isAuthActive
         ? "auth"
         : null;
@@ -186,9 +192,12 @@ export default function TopMenu() {
           )}
 
           <Link
-            href={bookingsLinkHref}
+            href={profileHref}
+            ref={(node) => {
+              linkRefs.current.profile = node;
+            }}
             className="figma-card-action text-[var(--figma-red)]"
-            aria-label={session ? "Open bookings" : "Open login"}
+            aria-label={session ? "Open profile" : "Open login"}
           >
             <UserIcon />
           </Link>

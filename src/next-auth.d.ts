@@ -6,6 +6,7 @@ declare module "next-auth" {
       _id: string;
       name: string;
       email: string;
+      telephone?: string;
       role: string;
       token: string;
       defaultGuestsAdult?: number;
@@ -15,6 +16,7 @@ declare module "next-auth" {
 
   interface User {
     _id?: string;
+    telephone?: string;
     role?: string;
     token?: string;
     defaultGuestsAdult?: number;
@@ -25,6 +27,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     _id?: string;
+    telephone?: string;
     role?: string;
     token?: string;
     defaultGuestsAdult?: number;
