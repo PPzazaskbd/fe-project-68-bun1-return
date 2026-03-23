@@ -1,9 +1,10 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BackendBookingItem, BookingItem, HotelItem } from "@/interface";
 import BookingListSkeleton from "./BookingListSkeleton";
 import PaginationControls from "./PaginationControls";
@@ -16,6 +17,7 @@ import {
   getBookings,
   updateBooking,
 } from "@/libs/bookingsApi";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 
 interface BookingListProps {
   hotels: HotelItem[];
@@ -132,22 +134,51 @@ export default function BookingList({
   isAdmin = false,
 }: BookingListProps) {
   const { data: session, status: sessionStatus, update } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const bookedNoticeHandledRef = useRef(false);
   const userEmail = session?.user?.email || "";
   const effectiveAdmin =
     isAdmin ||
     session?.user?.role === "admin" ||
     userEmail === "admin@example.com";
   const token = session?.user?.token || "";
+  const { notice: listNotice, showNotice: showListNotice, dismissNotice: dismissListNotice } =
+    useDismissibleNotice(2600);
+  const { notice: editNotice, showNotice: showEditNotice, dismissNotice: dismissEditNotice } =
+    useDismissibleNotice();
 
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
-  const [editError, setEditError] = useState("");
   const [listError, setListError] = useState("");
   const [savedBookingId, setSavedBookingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const clearBookedFlag = () => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("booked");
+    const nextUrl = nextParams.toString() ? `${pathname}?${nextParams.toString()}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  const handleDismissListNotice = (immediate = false) => {
+    dismissListNotice(immediate);
+
+    if (listError) {
+      setListError("");
+    }
+
+    if (searchParams.get("booked") === "1") {
+      clearBookedFlag();
+    }
+  };
+
+  const handleDismissEditNotice = (immediate = false) => {
+    dismissEditNotice(immediate);
+  };
 
   useEffect(() => {
     if (!savedBookingId) return;
@@ -158,6 +189,44 @@ export default function BookingList({
 
     return () => window.clearTimeout(timeout);
   }, [savedBookingId]);
+
+  useEffect(() => {
+    const isBooked = searchParams.get("booked") === "1";
+
+    if (!isBooked) {
+      bookedNoticeHandledRef.current = false;
+      return;
+    }
+
+    if (bookedNoticeHandledRef.current) {
+      return;
+    }
+
+    bookedNoticeHandledRef.current = true;
+    showListNotice({
+      type: "success",
+      title: "BOOKING CONFIRMED",
+      message: "Your reservation was sent to the backend successfully.",
+      autoHideMs: 2600,
+    });
+
+    const timeout = window.setTimeout(() => {
+      clearBookedFlag();
+    }, 2600);
+
+    return () => window.clearTimeout(timeout);
+  }, [pathname, router, searchParams, showListNotice]);
+
+  useEffect(() => {
+    if (!listError) {
+      return;
+    }
+
+    showListNotice({
+      type: "error",
+      message: listError,
+    });
+  }, [listError, showListNotice]);
 
   useEffect(() => {
     if (sessionStatus === "loading") {
@@ -256,7 +325,7 @@ export default function BookingList({
       guestsAdult: item.guestsAdult,
       guestsChild: item.guestsChild,
     });
-    setEditError("");
+    dismissEditNotice(true);
     setSavedBookingId(null);
   };
 
@@ -264,28 +333,28 @@ export default function BookingList({
     if (!editState || !item.id || !token) return;
 
     if (!editState.roomNumber.trim()) {
-      setEditError("Room number is required.");
+      showEditNotice({ type: "error", message: "Room number is required." });
       return;
     }
 
     if (editState.guestsAdult < 1) {
-      setEditError("At least one adult guest is required.");
+      showEditNotice({ type: "error", message: "At least one adult guest is required." });
       return;
     }
 
     if (editState.guestsChild < 0) {
-      setEditError("Child guest count cannot be negative.");
+      showEditNotice({ type: "error", message: "Child guest count cannot be negative." });
       return;
     }
 
     if (!editState.checkIn || !editState.checkOut || editState.checkOut <= editState.checkIn) {
-      setEditError("Choose a valid stay period.");
+      showEditNotice({ type: "error", message: "Choose a valid stay period." });
       return;
     }
 
     const nights = calculateNights(editState.checkIn, editState.checkOut);
     if (nights > 3) {
-      setEditError("Maximum stay is 3 nights.");
+      showEditNotice({ type: "error", message: "Maximum stay is 3 nights." });
       return;
     }
 
@@ -311,7 +380,7 @@ export default function BookingList({
       );
       setEditingId(null);
       setEditState(null);
-      setEditError("");
+      dismissEditNotice(true);
       setSavedBookingId(item.id);
       setListError("");
       await update({
@@ -322,11 +391,13 @@ export default function BookingList({
         },
       }).catch(() => null);
     } catch (saveError) {
-      setEditError(
-        saveError instanceof Error
-          ? saveError.message
-          : "Failed to update booking.",
-      );
+      showEditNotice({
+        type: "error",
+        message:
+          saveError instanceof Error
+            ? saveError.message
+            : "Failed to update booking.",
+      });
     }
   };
 
@@ -337,22 +408,7 @@ export default function BookingList({
   if (bookings.length === 0) {
     return (
       <div className="space-y-4">
-        {searchParams.get("booked") === "1" ? (
-          <div className="figma-feedback figma-feedback-success">
-            <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
-              BOOKING CONFIRMED
-            </p>
-            <p className="mt-1 font-figma-copy text-[1.05rem]">
-              Your reservation was sent to the backend successfully.
-            </p>
-          </div>
-        ) : null}
-
-        {listError ? (
-          <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.2rem]">
-            {listError}
-          </p>
-        ) : null}
+        <DismissibleNotice notice={listNotice} onClose={handleDismissListNotice} />
 
         <div className="py-14 text-center font-figma-copy text-[1.6rem] text-[var(--figma-ink-soft)]">
           No bookings yet.
@@ -363,22 +419,7 @@ export default function BookingList({
 
   return (
     <div>
-      {searchParams.get("booked") === "1" ? (
-        <div className="figma-feedback figma-feedback-success mb-5">
-          <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
-            BOOKING CONFIRMED
-          </p>
-          <p className="mt-1 font-figma-copy text-[1.05rem]">
-            Your reservation was sent to the backend successfully.
-          </p>
-        </div>
-      ) : null}
-
-      {listError ? (
-        <p className="figma-feedback figma-feedback-error mb-5 font-figma-copy text-[1.2rem]">
-          {listError}
-        </p>
-      ) : null}
+      <DismissibleNotice notice={listNotice} onClose={handleDismissListNotice} className="mb-5" />
 
       <div className="space-y-6">
         {visibleBookings.map((item) => {
@@ -403,16 +444,20 @@ export default function BookingList({
                   : undefined
               }
             >
-              {isRecentlySaved ? (
-                <div className="figma-feedback figma-feedback-success mb-4">
-                  <p className="font-figma-nav text-[1.1rem] tracking-[0.08em]">
-                    BOOKING UPDATED
-                  </p>
-                  <p className="mt-1 font-figma-copy text-[1.05rem]">
-                    Your changes were saved successfully.
-                  </p>
-                </div>
-              ) : null}
+              <DismissibleNotice
+                notice={
+                  isRecentlySaved
+                    ? {
+                        type: "success",
+                        title: "BOOKING UPDATED",
+                        message: "Your changes were saved successfully.",
+                        isVisible: true,
+                      }
+                    : null
+                }
+                onClose={() => setSavedBookingId(null)}
+                className="mb-4"
+              />
 
               <div className="grid gap-5 lg:grid-cols-[160px_1fr_auto_auto] lg:items-start">
                 <div className="relative aspect-square overflow-hidden bg-[#edf0f2]">
@@ -481,7 +526,7 @@ export default function BookingList({
                         ? (() => {
                             setEditingId(null);
                             setEditState(null);
-                            setEditError("");
+                            dismissEditNotice(true);
                           })()
                         : handleStartEdit(item)
                     }
@@ -594,11 +639,11 @@ export default function BookingList({
                     />
                   </div>
 
-                  {editError ? (
-                    <p className="figma-feedback figma-feedback-error mt-4 font-figma-copy text-[1.2rem]">
-                      {editError}
-                    </p>
-                  ) : null}
+                  <DismissibleNotice
+                    notice={editNotice}
+                    onClose={handleDismissEditNotice}
+                    className="mt-4"
+                  />
 
                   <button
                     type="button"

@@ -1,6 +1,8 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,16 +14,16 @@ function RegisterForm() {
   const requestedCallbackUrl = searchParams.get("callbackUrl");
   const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
   const loginHref = buildAuthHref("/login", requestedCallbackUrl);
+  const { notice, showNotice, dismissNotice } = useDismissibleNotice();
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
+    dismissNotice(true);
     setIsSubmitting(true);
 
     try {
@@ -33,12 +35,15 @@ function RegisterForm() {
       const data = await response.json();
 
       if (!response.ok || data.success === false) {
-        setError(data.message || data.msg || "Registration failed.");
+        showNotice({
+          type: "error",
+          message: data.message || data.msg || "Registration failed.",
+        });
         setIsSubmitting(false);
         return;
       }
     } catch {
-      setError("Registration service unavailable.");
+      showNotice({ type: "error", message: "Registration service unavailable." });
       setIsSubmitting(false);
       return;
     }
@@ -51,12 +56,18 @@ function RegisterForm() {
       });
 
       if (response?.error) {
-        setError("Account created, but automatic sign-in failed. Please log in.");
+        showNotice({
+          type: "error",
+          message: "Account created, but automatic sign-in failed. Please log in.",
+        });
         setIsSubmitting(false);
         return;
       }
     } catch {
-      setError("Account created, but automatic sign-in failed. Please log in.");
+      showNotice({
+        type: "error",
+        message: "Account created, but automatic sign-in failed. Please log in.",
+      });
       setIsSubmitting(false);
       return;
     }
@@ -122,11 +133,7 @@ function RegisterForm() {
             />
           </label>
 
-          {error ? (
-            <p className="figma-feedback figma-feedback-error font-figma-copy text-center text-[1.2rem]">
-              {error}
-            </p>
-          ) : null}
+          <DismissibleNotice notice={notice} onClose={dismissNotice} />
 
           <button
             type="submit"

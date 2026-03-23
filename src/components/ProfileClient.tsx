@@ -1,7 +1,9 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import { normalizeGuestPreference } from "@/libs/dateRangeParams";
 import { getProfile, updateUserProfile } from "@/libs/profileApi";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,7 +11,6 @@ interface ProfileSource {
   name?: string | null;
   email?: string | null;
   telephone?: string | null;
-  role?: string | null;
   defaultGuestsAdult?: string | number | null;
   defaultGuestsChild?: string | number | null;
   createdAt?: string | null;
@@ -19,7 +20,6 @@ interface ProfileFormState {
   name: string;
   email: string;
   telephone: string;
-  role: string;
   defaultGuestsAdult: string;
   defaultGuestsChild: string;
   createdAt: string;
@@ -32,7 +32,6 @@ function buildProfileFormState(source?: ProfileSource | null): ProfileFormState 
     name: source?.name ?? "",
     email: source?.email ?? "",
     telephone: source?.telephone ?? "",
-    role: source?.role ?? "",
     defaultGuestsAdult: String(guestPreference.defaultGuestsAdult),
     defaultGuestsChild: String(guestPreference.defaultGuestsChild),
     createdAt: source?.createdAt ?? "",
@@ -68,20 +67,18 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
 export default function ProfileClient() {
   const { data: session, update } = useSession();
   const editedRef = useRef(false);
+  const { notice, showNotice, dismissNotice } = useDismissibleNotice();
   const [form, setForm] = useState<ProfileFormState>(() =>
     buildProfileFormState({
       name: session?.user?.name,
       email: session?.user?.email,
       telephone: session?.user?.telephone,
-      role: session?.user?.role,
       defaultGuestsAdult: session?.user?.defaultGuestsAdult,
       defaultGuestsChild: session?.user?.defaultGuestsChild,
     }),
   );
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -119,7 +116,6 @@ export default function ProfileClient() {
       ignore = true;
     };
   }, [session?.user?.token]);
-
   const memberSince = useMemo(
     () => formatMemberSince(form.createdAt),
     [form.createdAt],
@@ -129,8 +125,7 @@ export default function ProfileClient() {
     (field: keyof ProfileFormState) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       editedRef.current = true;
-      setSuccess("");
-      setError("");
+      dismissNotice(true);
       setForm((current) => ({
         ...current,
         [field]: event.target.value,
@@ -139,13 +134,12 @@ export default function ProfileClient() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
-    setSuccess("");
+    dismissNotice(true);
 
     const token = session?.user?.token;
 
     if (!token) {
-      setError("Please log in again to update your profile.");
+      showNotice({ type: "error", message: "Please log in again to update your profile." });
       return;
     }
 
@@ -154,17 +148,17 @@ export default function ProfileClient() {
     const guestsChild = Number.parseInt(form.defaultGuestsChild, 10);
 
     if (!trimmedName) {
-      setError("Name is required.");
+      showNotice({ type: "error", message: "Name is required." });
       return;
     }
 
     if (!Number.isFinite(guestsAdult) || guestsAdult < 1) {
-      setError("At least one adult guest is required.");
+      showNotice({ type: "error", message: "At least one adult guest is required." });
       return;
     }
 
     if (!Number.isFinite(guestsChild) || guestsChild < 0) {
-      setError("Child guest count cannot be negative.");
+      showNotice({ type: "error", message: "Child guest count cannot be negative." });
       return;
     }
 
@@ -180,7 +174,7 @@ export default function ProfileClient() {
       const nextFormState = buildProfileFormState(updatedProfile);
       editedRef.current = false;
       setForm(nextFormState);
-      setSuccess("Profile updated.");
+      showNotice({ type: "success", message: "Profile updated." });
 
       await update({
         user: {
@@ -192,7 +186,10 @@ export default function ProfileClient() {
         },
       });
     } catch (saveError) {
-      setError(getErrorMessage(saveError, "Failed to update profile."));
+      showNotice({
+        type: "error",
+        message: getErrorMessage(saveError, "Failed to update profile."),
+      });
     } finally {
       setIsSaving(false);
     }
@@ -260,17 +257,6 @@ export default function ProfileClient() {
             </label>
 
             <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
-              <span className="sr-only">Role</span>
-              <input
-                type="text"
-                value={form.role.toUpperCase()}
-                readOnly
-                className="figma-input cursor-default opacity-70"
-                placeholder="Role"
-              />
-            </label>
-
-            <label className="font-figma-copy text-[2rem] text-[var(--figma-red-soft)]">
               <span className="sr-only">Default Adults</span>
               <input
                 type="number"
@@ -305,17 +291,7 @@ export default function ProfileClient() {
               guest query parameters.
             </p>
 
-            {success ? (
-              <p className="figma-feedback figma-feedback-success font-figma-copy text-center text-[1.2rem]">
-                {success}
-              </p>
-            ) : null}
-
-            {error ? (
-              <p className="figma-feedback figma-feedback-error font-figma-copy text-center text-[1.2rem]">
-                {error}
-              </p>
-            ) : null}
+            <DismissibleNotice notice={notice} onClose={dismissNotice} />
 
             <button
               type="submit"
