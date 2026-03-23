@@ -15,7 +15,7 @@ interface ShowNoticeOptions {
 }
 
 export function useDismissibleNotice(
-  defaultAutoHideMs = 4200,
+  defaultAutoHideMs = 2100,
   clearDelayMs = 280,
 ) {
   const [notice, setNotice] = useState<DismissibleNotice | null>(null);

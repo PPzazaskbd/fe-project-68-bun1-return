@@ -17,9 +17,23 @@ function getErrorMessage(payload: unknown, fallbackMessage: string) {
     message?: string;
     msg?: string;
     error?: string;
+    fields?: Record<string, unknown>;
   };
 
-  return candidate.message || candidate.msg || candidate.error || fallbackMessage;
+  const firstFieldError =
+    candidate.fields &&
+    typeof candidate.fields === "object" &&
+    Object.values(candidate.fields).find(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    );
+
+  return (
+    (typeof firstFieldError === "string" ? firstFieldError : undefined) ||
+    candidate.message ||
+    candidate.msg ||
+    candidate.error ||
+    fallbackMessage
+  );
 }
 
 async function parseJson(response: Response) {
