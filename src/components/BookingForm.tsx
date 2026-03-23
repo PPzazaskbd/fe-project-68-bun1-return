@@ -75,13 +75,17 @@ function findHotelByReference(
 }
 
 export default function BookingForm({ hotels }: BookingFormProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const today = getTodayIsoDate();
   const initialHotel = hotels[0]?.name ?? "";
-  const toolbarState = getDateRangeFromSearchParams(searchParams, today);
+  const toolbarState = getDateRangeFromSearchParams(
+    searchParams,
+    today,
+    session?.user,
+  );
   const bookingSeed = searchParams.toString();
 
   const [hotel, setHotel] = useState(initialHotel);
@@ -209,6 +213,13 @@ export default function BookingForm({ hotels }: BookingFormProps) {
         guestsAdult,
         guestsChild,
       });
+      await update({
+        user: {
+          ...session.user,
+          defaultGuestsAdult: guestsAdult,
+          defaultGuestsChild: guestsChild,
+        },
+      }).catch(() => null);
 
       router.push("/mybooking?booked=1");
       router.refresh();

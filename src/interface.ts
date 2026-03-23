@@ -22,6 +22,8 @@ export interface UserProfile {
   tel: string;
   password: string;
   role?: string;
+  defaultGuestsAdult?: number;
+  defaultGuestsChild?: number;
   __v?: number;
 }
 

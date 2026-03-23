@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HotelItem, HotelJson } from "@/interface";
@@ -28,12 +29,17 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 export default function CardPanel({ hotelsJson }: { hotelsJson: HotelJson }) {
+  const { data: session } = useSession();
   const hotels = hotelsJson.data ?? [];
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const today = getTodayIsoDate();
-  const urlDateRange = getDateRangeFromSearchParams(searchParams, today);
+  const urlDateRange = getDateRangeFromSearchParams(
+    searchParams,
+    today,
+    session?.user,
+  );
   const [fromDate, setFromDate] = useState(urlDateRange.checkIn);
   const [toDate, setToDate] = useState(urlDateRange.checkOut);
   const [guestsAdult, setGuestsAdult] = useState(urlDateRange.guestsAdult);
