@@ -72,6 +72,7 @@ export const authOptions: AuthOptions = {
             (resolvedEmail === "admin@example.com" ? "admin" : "user");
           const resolvedId =
             getStringValue(
+              profileRecord?.id,
               profileRecord?._id,
               userRecord._id,
               userData?._id,
@@ -79,12 +80,18 @@ export const authOptions: AuthOptions = {
           const resolvedName =
             getStringValue(profileRecord?.name, userRecord.name, userData?.name) ||
             resolvedEmail;
+          const resolvedTelephone = getStringValue(
+            profileRecord?.telephone,
+            userRecord.telephone,
+            userData?.telephone,
+          );
           const guestPreference = readGuestPreference(profileRecord ?? userData ?? userRecord);
 
           return {
             id: resolvedId,
             name: resolvedName,
             email: resolvedEmail,
+            telephone: resolvedTelephone,
             role: resolvedRole,
             token: userRecord.token,
             defaultGuestsAdult: guestPreference.defaultGuestsAdult,
@@ -102,6 +109,7 @@ export const authOptions: AuthOptions = {
         token._id = (user as any).id;
         token.name = user.name;
         token.email = user.email;
+        token.telephone = (user as any).telephone;
         token.role = (user as any).role;
         token.token = (user as any).token;
         token.defaultGuestsAdult = (user as any).defaultGuestsAdult;
@@ -112,6 +120,19 @@ export const authOptions: AuthOptions = {
         const sessionRecord = getRecord(session);
         const sessionUser = getRecord(sessionRecord?.user);
         const guestPreference = readGuestPreference(sessionUser ?? sessionRecord);
+        const nextName = getStringValue(sessionUser?.name, sessionRecord?.name);
+        const nextTelephone = getStringValue(
+          sessionUser?.telephone,
+          sessionRecord?.telephone,
+        );
+
+        if (nextName) {
+          token.name = nextName;
+        }
+
+        if (nextTelephone) {
+          token.telephone = nextTelephone;
+        }
 
         token.defaultGuestsAdult = guestPreference.defaultGuestsAdult;
         token.defaultGuestsChild = guestPreference.defaultGuestsChild;
@@ -123,6 +144,7 @@ export const authOptions: AuthOptions = {
       session.user._id = token._id as string;
       session.user.name = token.name as string;
       session.user.email = token.email as string;
+      session.user.telephone = token.telephone as string | undefined;
       session.user.role = token.role as string;
       session.user.token = token.token as string;
       session.user.defaultGuestsAdult = token.defaultGuestsAdult as number | undefined;

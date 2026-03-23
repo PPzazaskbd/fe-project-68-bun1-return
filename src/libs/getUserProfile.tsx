@@ -4,6 +4,7 @@ export default async function getUserProfile(token: string) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    cache: "no-store",
   });
 
   return await res.json();
