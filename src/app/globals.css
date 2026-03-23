@@ -249,6 +249,25 @@ button:active {
   border-bottom-color: var(--figma-red-strong);
 }
 
+.figma-input-readonly {
+  border-bottom-color: rgba(23, 17, 12, 0.14);
+  background: rgba(23, 17, 12, 0.05);
+  color: rgba(23, 17, 12, 0.72);
+  border-radius: 0.45rem;
+  padding: 0.8rem 1rem;
+  cursor: default;
+}
+
+.figma-input-readonly::placeholder {
+  color: rgba(23, 17, 12, 0.48);
+}
+
+.figma-input-readonly:focus {
+  outline: none;
+  border-bottom-color: rgba(23, 17, 12, 0.14);
+  box-shadow: none;
+}
+
 .figma-toolbar {
   display: flex;
   align-items: flex-end;

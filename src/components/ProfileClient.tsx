@@ -240,8 +240,9 @@ export default function ProfileClient() {
                 type="email"
                 value={form.email}
                 readOnly
-                className="figma-input cursor-default opacity-70"
+                className="figma-input figma-input-readonly"
                 placeholder="Email Address"
+                aria-readonly="true"
               />
             </label>
 
@@ -251,8 +252,9 @@ export default function ProfileClient() {
                 type="text"
                 value={form.telephone}
                 readOnly
-                className="figma-input cursor-default opacity-70"
+                className="figma-input figma-input-readonly"
                 placeholder="Phone Number"
+                aria-readonly="true"
               />
             </label>
 
