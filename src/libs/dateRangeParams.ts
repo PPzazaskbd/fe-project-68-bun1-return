@@ -1,10 +1,18 @@
 import { getTodayIsoDate } from "./bookingStorage";
 
+export const DEFAULT_GUESTS_ADULT = 1;
+export const DEFAULT_GUESTS_CHILD = 0;
+
 export interface DateRangeValue {
   checkIn: string;
   checkOut: string;
   guestsAdult: number;
   guestsChild: number;
+}
+
+export interface GuestPreferenceValue {
+  defaultGuestsAdult?: string | number | null;
+  defaultGuestsChild?: string | number | null;
 }
 
 interface SearchParamsLike {
@@ -61,12 +69,30 @@ function normalizeGuestCount(
     : fallbackValue;
 }
 
+export function normalizeGuestPreference(
+  guestPreference?: GuestPreferenceValue | null,
+) {
+  return {
+    defaultGuestsAdult: normalizeGuestCount(
+      guestPreference?.defaultGuestsAdult,
+      DEFAULT_GUESTS_ADULT,
+      DEFAULT_GUESTS_ADULT,
+    ),
+    defaultGuestsChild: normalizeGuestCount(
+      guestPreference?.defaultGuestsChild,
+      DEFAULT_GUESTS_CHILD,
+      DEFAULT_GUESTS_CHILD,
+    ),
+  };
+}
+
 export function normalizeDateRange(
   checkIn: string | null | undefined,
   checkOut: string | null | undefined,
   fallbackCheckIn = getTodayIsoDate(),
   guestsAdult?: string | number | null,
   guestsChild?: string | number | null,
+  guestPreference?: GuestPreferenceValue | null,
 ): DateRangeValue {
   const normalizedCheckIn = isValidIsoDate(checkIn) ? checkIn : fallbackCheckIn;
   const minimumCheckOut = addDaysToIsoDate(normalizedCheckIn, 1);
@@ -74,18 +100,28 @@ export function normalizeDateRange(
     isValidIsoDate(checkOut) && checkOut > normalizedCheckIn
       ? checkOut
       : minimumCheckOut;
+  const normalizedGuestPreference = normalizeGuestPreference(guestPreference);
 
   return {
     checkIn: normalizedCheckIn,
     checkOut: normalizedCheckOut,
-    guestsAdult: normalizeGuestCount(guestsAdult, 1, 1),
-    guestsChild: normalizeGuestCount(guestsChild, 0, 0),
+    guestsAdult: normalizeGuestCount(
+      guestsAdult,
+      normalizedGuestPreference.defaultGuestsAdult,
+      DEFAULT_GUESTS_ADULT,
+    ),
+    guestsChild: normalizeGuestCount(
+      guestsChild,
+      normalizedGuestPreference.defaultGuestsChild,
+      DEFAULT_GUESTS_CHILD,
+    ),
   };
 }
 
 export function getDateRangeFromSearchParams(
   searchParams: SearchParamsLike,
   fallbackCheckIn = getTodayIsoDate(),
+  guestPreference?: GuestPreferenceValue | null,
 ) {
   return normalizeDateRange(
     searchParams.get("checkIn"),
@@ -93,6 +129,7 @@ export function getDateRangeFromSearchParams(
     fallbackCheckIn,
     searchParams.get("guestsAdult"),
     searchParams.get("guestsChild"),
+    guestPreference,
   );
 }
 

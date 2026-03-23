@@ -1,4 +1,6 @@
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getTodayIsoDate } from "@/libs/bookingStorage";
 import { buildDateRangeHref, normalizeDateRange } from "@/libs/dateRangeParams";
 
@@ -12,6 +14,7 @@ function getFirstParamValue(value: string | string[] | undefined) {
 
 export default async function BookingPage({ searchParams }: BookingPageProps) {
   const resolvedSearchParams = await searchParams;
+  const session = await getServerSession(authOptions).catch(() => null);
   const hotelId = getFirstParamValue(resolvedSearchParams.hotelId);
   const redirectRange = normalizeDateRange(
     getFirstParamValue(resolvedSearchParams.checkIn),
@@ -19,6 +22,7 @@ export default async function BookingPage({ searchParams }: BookingPageProps) {
     getTodayIsoDate(),
     getFirstParamValue(resolvedSearchParams.guestsAdult),
     getFirstParamValue(resolvedSearchParams.guestsChild),
+    session?.user,
   );
 
   redirect(

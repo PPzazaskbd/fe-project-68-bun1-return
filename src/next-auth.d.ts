@@ -8,6 +8,8 @@ declare module "next-auth" {
       email: string;
       role: string;
       token: string;
+      defaultGuestsAdult?: number;
+      defaultGuestsChild?: number;
     };
   }
 
@@ -15,6 +17,8 @@ declare module "next-auth" {
     _id?: string;
     role?: string;
     token?: string;
+    defaultGuestsAdult?: number;
+    defaultGuestsChild?: number;
   }
 }
 
@@ -23,5 +27,7 @@ declare module "next-auth/jwt" {
     _id?: string;
     role?: string;
     token?: string;
+    defaultGuestsAdult?: number;
+    defaultGuestsChild?: number;
   }
 }

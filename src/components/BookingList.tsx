@@ -131,7 +131,7 @@ export default function BookingList({
   hotels,
   isAdmin = false,
 }: BookingListProps) {
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus, update } = useSession();
   const searchParams = useSearchParams();
   const userEmail = session?.user?.email || "";
   const effectiveAdmin =
@@ -314,6 +314,13 @@ export default function BookingList({
       setEditError("");
       setSavedBookingId(item.id);
       setListError("");
+      await update({
+        user: {
+          ...session?.user,
+          defaultGuestsAdult: editState.guestsAdult,
+          defaultGuestsChild: editState.guestsChild,
+        },
+      }).catch(() => null);
     } catch (saveError) {
       setEditError(
         saveError instanceof Error

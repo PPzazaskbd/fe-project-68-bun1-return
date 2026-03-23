@@ -27,12 +27,16 @@ function generateRandomRoomNumber() {
 }
 
 export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const today = getTodayIsoDate();
-  const urlDateRange = getDateRangeFromSearchParams(searchParams, today);
+  const urlDateRange = getDateRangeFromSearchParams(
+    searchParams,
+    today,
+    session?.user,
+  );
   const [fromDate, setFromDate] = useState(urlDateRange.checkIn);
   const [toDate, setToDate] = useState(urlDateRange.checkOut);
   const [guestsAdult, setGuestsAdult] = useState(urlDateRange.guestsAdult);
@@ -158,6 +162,13 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
           guestsAdult,
           guestsChild,
         });
+        await update({
+          user: {
+            ...session.user,
+            defaultGuestsAdult: guestsAdult,
+            defaultGuestsChild: guestsChild,
+          },
+        }).catch(() => null);
 
         router.push("/mybooking?booked=1");
         router.refresh();
