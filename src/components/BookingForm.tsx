@@ -1,7 +1,9 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HotelItem } from "@/interface";
@@ -93,7 +95,7 @@ export default function BookingForm({ hotels }: BookingFormProps) {
   const [guestsChild, setGuestsChild] = useState(toolbarState.guestsChild);
   const [checkIn, setCheckIn] = useState(toolbarState.checkIn);
   const [checkOut, setCheckOut] = useState(toolbarState.checkOut);
-  const [error, setError] = useState("");
+  const { notice, showNotice, dismissNotice } = useDismissibleNotice();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const roomNumber = useMemo(() => generateRandomRoomNumber(), [bookingSeed]);
 
@@ -171,7 +173,7 @@ export default function BookingForm({ hotels }: BookingFormProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
+    dismissNotice(true);
 
     if (!session?.user?.token) {
       router.push(`/login?callbackUrl=${encodeURIComponent(bookingCallbackUrl)}`);
@@ -179,27 +181,30 @@ export default function BookingForm({ hotels }: BookingFormProps) {
     }
 
     if (!submissionHotelId) {
-      setError("Please choose a hotel.");
+      showNotice({ type: "error", message: "Please choose a hotel." });
       return;
     }
 
     if (guestsAdult < 1) {
-      setError("At least one adult guest is required.");
+      showNotice({ type: "error", message: "At least one adult guest is required." });
       return;
     }
 
     if (guestsChild < 0) {
-      setError("Child guest count cannot be negative.");
+      showNotice({ type: "error", message: "Child guest count cannot be negative." });
       return;
     }
 
     if (!checkIn || !checkOut || checkOut <= checkIn) {
-      setError("Please choose a valid stay period.");
+      showNotice({ type: "error", message: "Please choose a valid stay period." });
       return;
     }
 
     if (nights > 3) {
-      setError("Bookings are limited to a maximum of 3 nights.");
+      showNotice({
+        type: "error",
+        message: "Bookings are limited to a maximum of 3 nights.",
+      });
       return;
     }
 
@@ -224,11 +229,13 @@ export default function BookingForm({ hotels }: BookingFormProps) {
       router.push("/mybooking?booked=1");
       router.refresh();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Booking service unavailable.",
-      );
+      showNotice({
+        type: "error",
+        message:
+          submitError instanceof Error
+            ? submitError.message
+            : "Booking service unavailable.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -314,11 +321,7 @@ export default function BookingForm({ hotels }: BookingFormProps) {
             />
           </div>
 
-          {error ? (
-            <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.2rem]">
-              {error}
-            </p>
-          ) : null}
+          <DismissibleNotice notice={notice} onClose={dismissNotice} />
 
           <button
             type="submit"
