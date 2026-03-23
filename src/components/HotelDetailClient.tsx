@@ -1,10 +1,12 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HotelItem } from "@/interface";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import DateRangeToolbar from "./DateRangeToolbar";
 import Arrow from "./Arrow";
 import { calculateNights, getTodayIsoDate } from "@/libs/bookingStorage";
@@ -42,7 +44,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   const [guestsAdult, setGuestsAdult] = useState(urlDateRange.guestsAdult);
   const [guestsChild, setGuestsChild] = useState(urlDateRange.guestsChild);
   const [bookingState, setBookingState] = useState<"idle" | "arming" | "submitting">("idle");
-  const [bookingError, setBookingError] = useState("");
+  const { notice, showNotice, dismissNotice } = useDismissibleNotice();
   const bookingTimerRef = useRef<number | null>(null);
   const hotelId = hotel.id || hotel._id;
   const nights = Math.max(1, calculateNights(fromDate, toDate));
@@ -131,7 +133,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   };
 
   const handleBook = () => {
-    setBookingError("");
+    dismissNotice(true);
 
     if (!session?.user?.token) {
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
@@ -173,11 +175,13 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         router.push("/mybooking?booked=1");
         router.refresh();
       } catch (submitError) {
-        setBookingError(
-          submitError instanceof Error
-            ? submitError.message
-            : "Booking service unavailable.",
-        );
+        showNotice({
+          type: "error",
+          message:
+            submitError instanceof Error
+              ? submitError.message
+              : "Booking service unavailable.",
+        });
         setBookingState("idle");
       }
     }, BOOKING_ARMING_DELAY_MS);
@@ -315,11 +319,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                   <span>Go Back</span>
                 </Link>
 
-                {bookingError ? (
-                  <p className="figma-feedback figma-feedback-error font-figma-copy text-[1.15rem]">
-                    {bookingError}
-                  </p>
-                ) : null}
+                <DismissibleNotice notice={notice} onClose={dismissNotice} />
               </div>
             </div>
           </div>

@@ -1,6 +1,8 @@
 "use client";
 
+import DismissibleNotice from "@/components/DismissibleNotice";
 import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
+import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Suspense, useState } from "react";
@@ -12,14 +14,14 @@ function LoginForm() {
   const requestedCallbackUrl = searchParams.get("callbackUrl");
   const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
   const registerHref = buildAuthHref("/register", requestedCallbackUrl);
+  const { notice, showNotice, dismissNotice } = useDismissibleNotice();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
+    dismissNotice(true);
     setIsSubmitting(true);
 
     try {
@@ -30,7 +32,7 @@ function LoginForm() {
       });
 
       if (response?.error) {
-        setError("Invalid email or password.");
+        showNotice({ type: "error", message: "Invalid email or password." });
         setIsSubmitting(false);
         return;
       }
@@ -38,7 +40,7 @@ function LoginForm() {
       router.push(callbackUrl);
       router.refresh();
     } catch {
-      setError("Login service unavailable.");
+      showNotice({ type: "error", message: "Login service unavailable." });
       setIsSubmitting(false);
     }
   };
@@ -75,11 +77,7 @@ function LoginForm() {
             />
           </label>
 
-          {error ? (
-            <p className="figma-feedback figma-feedback-error font-figma-copy text-center text-[1.2rem]">
-              {error}
-            </p>
-          ) : null}
+          <DismissibleNotice notice={notice} onClose={dismissNotice} />
 
           <button
             type="submit"
