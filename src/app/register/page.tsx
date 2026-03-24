@@ -2,11 +2,27 @@
 
 import DismissibleNotice from "@/components/DismissibleNotice";
 import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
+import { savePendingOtpRegistration } from "@/libs/pendingOtpRegistration";
 import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+
+function getRecord(value: unknown) {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function getStringValue(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
 
 function RegisterForm() {
   const router = useRouter();
@@ -32,48 +48,38 @@ function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, telephone, email, password }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as unknown;
+      const payload = getRecord(data);
+      const payloadData = getRecord(payload?.data);
 
-      if (!response.ok || data.success === false) {
+      if (!response.ok || payload?.success === false) {
         showNotice({
           type: "error",
-          message: data.message || data.msg || "Registration failed.",
+          message:
+            getStringValue(payload?.message, payload?.msg, payload?.error) ||
+            "Registration failed.",
         });
         setIsSubmitting(false);
         return;
       }
+
+      savePendingOtpRegistration({
+        name,
+        email: getStringValue(payloadData?.email, payload?.email) || email,
+        callbackUrl,
+        otpExpiresAt: getStringValue(payloadData?.otpExpiresAt, payload?.otpExpiresAt),
+        resendAvailableAt: getStringValue(
+          payloadData?.resendAvailableAt,
+          payload?.resendAvailableAt,
+        ),
+      });
     } catch {
       showNotice({ type: "error", message: "Registration service unavailable." });
       setIsSubmitting(false);
       return;
     }
 
-    try {
-      const response = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (response?.error) {
-        showNotice({
-          type: "error",
-          message: "Account created, but automatic sign-in failed. Please log in.",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-    } catch {
-      showNotice({
-        type: "error",
-        message: "Account created, but automatic sign-in failed. Please log in.",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    router.push(callbackUrl);
-    router.refresh();
+    router.push("/verify-otp");
   };
 
   return (

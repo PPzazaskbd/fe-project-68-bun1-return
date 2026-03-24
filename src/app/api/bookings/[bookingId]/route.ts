@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_BOOKINGS_API_BASE = "https://backend-for-frontend-bun1.vercel.app/api/v1";
+import { BACKEND_API_BASE } from "@/libs/backendApiBase";
 
 function getAuthorizationHeader(request: NextRequest) {
   return request.headers.get("authorization");
@@ -34,7 +33,7 @@ export async function PUT(
     const bookingId = await getBookingId(context);
     const body = await request.json();
     const response = await fetch(
-      `${BACKEND_BOOKINGS_API_BASE}/bookings/${encodeURIComponent(bookingId)}`,
+      `${BACKEND_API_BASE}/bookings/${encodeURIComponent(bookingId)}`,
       {
         method: "PUT",
         headers: {
@@ -68,7 +67,7 @@ export async function DELETE(
   try {
     const bookingId = await getBookingId(context);
     const response = await fetch(
-      `${BACKEND_BOOKINGS_API_BASE}/bookings/${encodeURIComponent(bookingId)}`,
+      `${BACKEND_API_BASE}/bookings/${encodeURIComponent(bookingId)}`,
       {
         method: "DELETE",
         headers: {
