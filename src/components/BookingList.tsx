@@ -190,16 +190,43 @@ const BookingListItem = memo(function BookingListItem({
 
         <div className="space-y-2 font-figma-copy text-[1.25rem] text-[var(--figma-ink)]">
           <p className="text-[1.65rem] text-[var(--figma-ink)]">{item.hotel}</p>
-          <p>Room {item.roomNumber}</p>
+          <p className="flex items-center gap-3">
+            <Image
+              src="/telephone.svg"
+              alt=""
+              width={20}
+              height={20}
+              aria-hidden="true"
+            />
+            <span>{hotel?.tel ?? "N/A"}</span>
+          </p>
           <p>
             {item.guestsAdult} adult{item.guestsAdult === 1 ? "" : "s"}
             {item.guestsChild > 0
               ? `, ${item.guestsChild} child${item.guestsChild === 1 ? "" : "ren"}`
               : ""}
           </p>
-          <p>{hotel?.address ?? "Address unavailable"}</p>
-          <p>
-            {formatBookingDate(item.checkIn)} to {formatBookingDate(item.checkOut)}
+          <p className="flex items-center gap-3">
+            <Image
+              src="/address.svg"
+              alt=""
+              width={20}
+              height={20}
+              aria-hidden="true"
+            />
+            <span>{hotel?.address ?? "Address unavailable"}</span>
+          </p>
+          <p className="flex items-center gap-3">
+            <Image
+              src="/calendar.svg"
+              alt=""
+              width={20}
+              height={20}
+              aria-hidden="true"
+            />
+            <span>
+              {formatBookingDate(item.checkIn)} to {formatBookingDate(item.checkOut)}
+            </span>
           </p>
           {effectiveAdmin ? (
             <p className="text-[1.1rem] text-[var(--figma-red)]">
@@ -225,12 +252,13 @@ const BookingListItem = memo(function BookingListItem({
           </p>
           <p className="mt-3 flex items-center justify-between gap-4">
             <Image
-              src="/telephone.svg"
-              alt="Telephone"
+              src="/roomNumber.svg"
+              alt=""
               width={20}
               height={20}
+              aria-hidden="true"
             />
-            <span>{hotel?.tel ?? "N/A"}</span>
+            <span>Room {item.roomNumber}</span>
           </p>
         </div>
 
