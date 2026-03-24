@@ -45,7 +45,9 @@ export default function TopMenu() {
   const isHotelsActive = pathname.startsWith("/venue");
   const isBookingsActive = pathname === "/mybooking" || pathname === "/admin";
   const isProfileActive = pathname === "/profile";
-  const isAuthActive = !session && (pathname === "/login" || pathname === "/register");
+  const isAuthActive =
+    !session &&
+    (pathname === "/login" || pathname === "/register" || pathname === "/verify-otp");
   const activeKey: NavKey | null = isHotelsActive
     ? "hotels"
     : isBookingsActive

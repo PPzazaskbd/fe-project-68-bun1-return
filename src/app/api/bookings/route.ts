@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_BOOKINGS_API_BASE = "https://backend-for-frontend-bun1.vercel.app/api/v1";
+import { BACKEND_API_BASE } from "@/libs/backendApiBase";
 
 function getAuthorizationHeader(request: NextRequest) {
   return request.headers.get("authorization");
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${BACKEND_BOOKINGS_API_BASE}/bookings`, {
+    const response = await fetch(`${BACKEND_API_BASE}/bookings`, {
       method: "GET",
       headers: {
         Authorization: authorization,
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${BACKEND_BOOKINGS_API_BASE}/hotels/${encodeURIComponent(hotelId)}/bookings`,
+      `${BACKEND_API_BASE}/hotels/${encodeURIComponent(hotelId)}/bookings`,
       {
         method: "POST",
         headers: {

@@ -5,19 +5,39 @@ import { buildAuthHref, getSafeCallbackUrl } from "@/libs/authRedirect";
 import { useDismissibleNotice } from "@/libs/useDismissibleNotice";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedCallbackUrl = searchParams.get("callbackUrl");
+  const prefilledEmail = searchParams.get("email") ?? "";
+  const showVerifiedNotice = searchParams.get("verified") === "1";
   const callbackUrl = getSafeCallbackUrl(requestedCallbackUrl);
   const registerHref = buildAuthHref("/register", requestedCallbackUrl);
   const { notice, showNotice, dismissNotice } = useDismissibleNotice();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (prefilledEmail) {
+      setEmail(prefilledEmail);
+    }
+  }, [prefilledEmail]);
+
+  useEffect(() => {
+    if (!showVerifiedNotice) {
+      return;
+    }
+
+    showNotice({
+      type: "success",
+      message: "Email verified. Log in to continue.",
+      autoHideMs: 2600,
+    });
+  }, [showNotice, showVerifiedNotice]);
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
