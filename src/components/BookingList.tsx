@@ -97,6 +97,14 @@ function normalizeLookupValue(value: unknown) {
   return getReferenceValue(value).trim().toLowerCase();
 }
 
+function getObjectFieldValue(value: unknown, field: "name" | "email") {
+  if (!value || typeof value !== "object" || !(field in value)) {
+    return "";
+  }
+
+  return getReferenceValue((value as Record<"name" | "email", unknown>)[field]);
+}
+
 function findHotelByReference(reference: unknown, hotels: HotelItem[]) {
   const normalizedReference = normalizeLookupValue(reference);
 
@@ -128,11 +136,15 @@ function mapBackendBooking(item: BackendBookingItem, hotels: HotelItem[]): Booki
     "Hotel unavailable";
 
   const userId = getReferenceValue(item.user);
+  const userName = getObjectFieldValue(item.user, "name");
+  const userEmail = getObjectFieldValue(item.user, "email");
 
   return {
     id: item._id,
     hotelId: hotelId || matchedHotel?._id || matchedHotel?.id || "",
     userId,
+    userName: userName || userEmail || userId,
+    userEmail: userEmail || undefined,
     hotel: hotelLabel,
     checkIn: startDate,
     checkOut: addDays(startDate, nights),
@@ -230,7 +242,7 @@ const BookingListItem = memo(function BookingListItem({
           </p>
           {effectiveAdmin ? (
             <p className="text-[1.1rem] text-[var(--figma-red)]">
-              Guest: {item.userName}
+              Guest: {item.userName || item.userEmail || item.userId || "Unknown guest"}
             </p>
           ) : null}
           {item.createdAt ? (
