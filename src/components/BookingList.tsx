@@ -258,7 +258,7 @@ const BookingListItem = memo(function BookingListItem({
               height={20}
               aria-hidden="true"
             />
-            <span>Room {item.roomNumber}</span>
+            <span>{item.roomNumber}</span>
           </p>
         </div>
 
