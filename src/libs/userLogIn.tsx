@@ -1,5 +1,7 @@
+import { buildBackendUrl } from "@/libs/backendApiBase";
+
 export default async function userLogIn(email: string, password: string) {
-  const res = await fetch("https://backend-for-frontend-bun1.vercel.app/api/v1/auth/login", {
+  const res = await fetch(buildBackendUrl("/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
