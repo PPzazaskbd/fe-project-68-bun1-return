@@ -230,7 +230,7 @@ const BookingListItem = memo(function BookingListItem({
           </p>
           {effectiveAdmin ? (
             <p className="text-[1.1rem] text-[var(--figma-red)]">
-              User ID: {item.userId}
+              Guest: {item.userName}
             </p>
           ) : null}
           {item.createdAt ? (
