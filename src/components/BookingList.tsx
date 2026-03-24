@@ -216,8 +216,8 @@ const BookingListItem = memo(function BookingListItem({
         <div className="min-w-[9rem] border-l border-[rgba(171,25,46,0.12)] pl-5 font-figma-copy text-[1.25rem] text-[var(--figma-ink)]">
           <p className="flex items-center justify-between gap-4">
             <Image
-              src="/thaiBaht.svg"
-              alt="Thai Baht"
+              src="/dollar.svg"
+              alt="Dollar"
               width={20}
               height={20}
             />
@@ -225,12 +225,12 @@ const BookingListItem = memo(function BookingListItem({
           </p>
           <p className="mt-3 flex items-center justify-between gap-4">
             <Image
-              src="/roomNumber.svg"
-              alt="Room number"
+              src="/telephone.svg"
+              alt="Telephone"
               width={20}
               height={20}
             />
-            <span>{item.roomNumber}</span>
+            <span>{hotel?.tel ?? "N/A"}</span>
           </p>
         </div>
 
@@ -241,17 +241,13 @@ const BookingListItem = memo(function BookingListItem({
             className="figma-button h-[3.1rem] w-[3.1rem] p-0 text-[1.25rem]"
             aria-label={isEditing ? "Cancel editing booking" : "Edit booking"}
           >
-            {isEditing ? (
-              "x"
-            ) : (
-              <Image
-                src="/edit.svg"
-                alt=""
-                width={24}
-                height={24}
-                aria-hidden="true"
-              />
-            )}
+            <Image
+              src="/edit.svg"
+              alt=""
+              width={24}
+              height={24}
+              aria-hidden="true"
+            />
           </button>
 
           <button
