@@ -45,6 +45,17 @@ export interface HotelItem {
   __v?: number;
 }
 
+interface BackendReferenceItem {
+  _id?: string;
+  id?: string;
+  name?: string;
+  title?: string;
+}
+
+interface BackendUserReferenceItem extends BackendReferenceItem {
+  email?: string;
+}
+
 export interface HotelJson {
   success: boolean;
   count: number;
@@ -63,12 +74,12 @@ export interface BackendBookingItem {
   createdAt?: string;
   guestsAdult: number;
   guestsChild: number;
-  hotel: string;
+  hotel: string | BackendReferenceItem;
   startDate: string;
   nights: number;
   roomNumber: string;
   totalPrice: number;
-  user: string;
+  user: string | BackendUserReferenceItem;
 }
 
 export interface BookingJson {
